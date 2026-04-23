@@ -1,0 +1,1 @@
+Backend will handle all logic including data storing/fetching and anything else non graphical

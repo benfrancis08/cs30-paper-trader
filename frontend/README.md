@@ -1,0 +1,1 @@
+Frontend will handle only graphical aspects and fetch data from backend, no data or calculations will be stored in the frontend
