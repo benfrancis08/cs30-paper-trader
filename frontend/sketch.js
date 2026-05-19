@@ -109,17 +109,50 @@ function noiseGraph() {
   }
   fill(255);
   rect(width/2, height/2, w, w);
-  // console.log(w/200);
-
-  let max;
-  let min;
+  
+  // Ends function if stocks is currently being called/updated from backend
   let noise = stocks.get('NOIS');
-  if (noise.price !== undefined) {
-    for (let price of noise.price) {
-      price = parseFloat(price);
-      console.log(price);
-    }
+  if (!noise.price || noise.price.length === undefined) {
+    return; 
   }
+
+  // Turns all strings (from toFixed) back into numbers in price array
+  let prices = noise.price.map(p => parseFloat(p));
+
+  // Built in function returns the max/min of prices array
+  let minP = min(prices);
+  let maxP = max(prices);
+
+  // Sets up variables needed to create the graph
+  let range = maxP - minP;
+  let padding = w * 0.1;
+  let graphLeft = width/2 - w/2 + padding;
+  let graphRight = width/2 + w/2 - padding;
+  let graphTop = height/2 - w/2 + padding;
+  let graphBottom = height/2 + w/2 - padding;
+  let graphWidth = graphRight - graphLeft;
+  let graphHeight = graphBottom - graphTop;
+
+  // Sets up x and y axis for graph
+  line(graphLeft, graphBottom, graphRight, graphBottom); // x axis
+  line(graphLeft, graphTop, graphLeft, graphBottom); // y axis
+
+  // Creates labels for min/max on y axis
+  textSize(w*0.05);
+  textAlign(RIGHT, CENTER);
+  text(maxP, graphLeft + padding - 5, graphTop + padding);
+  text(minP, graphLeft + padding - 5, graphBottom - padding);
+  textAlign(CENTER, CENTER);
+
+  // Creates a single shape consiting all 200 points with lines connecting them
+  beginShape();
+  for (let i = 0; i < prices.length; i++) {
+    let x = map(i, 0, prices.length - 1, graphLeft, graphRight);
+    let y = map(prices[i], minP, maxP, graphBottom - pad, graphTop + pad);
+    vertex(x, y);
+  }
+  endShape();
+
 }
 
 // Returns a boolean based on if the mouse is in the given button or not
