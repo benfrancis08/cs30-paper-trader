@@ -70,6 +70,8 @@ async function getStocks() {
 } 
 
 function createButtons() {
+  noStroke();
+  textSize(buttons[0].w/8);
   let index = 0;
   for (let [key, value] of stocks) {
     if (mouseIsInButton(buttons[index])) {
@@ -108,20 +110,26 @@ function noiseGraph() {
     w = width/2;
   }
   fill(255);
+  noStroke();
   rect(width/2, height/2, w, w);
   
   // Ends function if stocks is currently being called/updated from backend
   let noise = stocks.get('NOIS');
-  if (!noise.price || noise.price.length === undefined) {
-    return; 
+  let noisePrice = [];
+  // Turns all strings (from toFixed) back into numbers in price array
+  if (noise.price.length !== undefined) {
+    for (let price of noise.price) {
+      price = parseFloat(price);
+      noisePrice.push(price);
+    }
+  }
+  else {
+    noisePrice = noisePrice;
   }
 
-  // Turns all strings (from toFixed) back into numbers in price array
-  let prices = noise.price.map(p => parseFloat(p));
-
   // Built in function returns the max/min of prices array
-  let minP = min(prices);
-  let maxP = max(prices);
+  let minP = min(noisePrice);
+  let maxP = max(noisePrice);
 
   // Sets up variables needed to create the graph
   let range = maxP - minP;
@@ -132,23 +140,28 @@ function noiseGraph() {
   let graphBottom = height/2 + w/2 - padding;
   let graphWidth = graphRight - graphLeft;
   let graphHeight = graphBottom - graphTop;
-
-  // Sets up x and y axis for graph
-  line(graphLeft, graphBottom, graphRight, graphBottom); // x axis
-  line(graphLeft, graphTop, graphLeft, graphBottom); // y axis
-
+  
   // Creates labels for min/max on y axis
   textSize(w*0.05);
   textAlign(RIGHT, CENTER);
-  text(maxP, graphLeft + padding - 5, graphTop + padding);
-  text(minP, graphLeft + padding - 5, graphBottom - padding);
+  noStroke();
+  fill(0);
+  text(maxP, graphLeft + padding - 5, graphTop - padding/2);
+  text(minP, graphLeft + padding - 5, graphBottom + padding/2);
   textAlign(CENTER, CENTER);
+  
+  // Sets up x and y axis for graph
+  stroke(0);
+  line(graphLeft, graphBottom, graphRight, graphBottom); // x axis
+  line(graphLeft, graphTop, graphLeft, graphBottom); // y axis
+
 
   // Creates a single shape consiting all 200 points with lines connecting them
+  fill(255);
   beginShape();
-  for (let i = 0; i < prices.length; i++) {
-    let x = map(i, 0, prices.length - 1, graphLeft, graphRight);
-    let y = map(prices[i], minP, maxP, graphBottom - pad, graphTop + pad);
+  for (let i = 0; i < noisePrice.length; i++) {
+    let x = map(i, 0, noisePrice.length - 1, graphLeft, graphRight);
+    let y = map(noisePrice[i], minP, maxP, graphBottom - padding, graphTop + padding);
     vertex(x, y);
   }
   endShape();
