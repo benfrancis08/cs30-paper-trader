@@ -8,6 +8,7 @@
 let currentTime;
 let price;
 let buttons;
+let tempNoise;
 let clicked = undefined;
 
 let stocks = new Map();
@@ -63,6 +64,10 @@ async function getStocks() {
       stocks.set(symbol, value);
     }
 
+    let tempCheck = stocks.get('NOIS');
+    if (tempCheck.price.length !== undefined) {
+      tempNoise = stocks.get('NOIS');
+    }
   }
   catch(error) {
     console.log("something went wrong " + error);
@@ -70,7 +75,6 @@ async function getStocks() {
 } 
 
 function createButtons() {
-  noStroke();
   textSize(buttons[0].w/8);
   let index = 0;
   for (let [key, value] of stocks) {
@@ -80,9 +84,12 @@ function createButtons() {
     else {
       fill(255);
     }
-
+    
+    stroke(0);
     rect(buttons[index].x, buttons[index].y, buttons[index].w, buttons[index].h);
+
     fill(0);
+    noStroke();
     if (key !== 'NOIS') {
       text(`${value.name}\n${value.price}`, buttons[index].x, buttons[index].y);
     }
@@ -111,20 +118,19 @@ function noiseGraph() {
   }
   fill(255);
   noStroke();
-  rect(width/2, height/2, w, w);
+  rect(width/2, height/2, w*1.15, w);
   
   // Ends function if stocks is currently being called/updated from backend
-  let noise = stocks.get('NOIS');
   let noisePrice = [];
   // Turns all strings (from toFixed) back into numbers in price array
-  if (noise.price.length !== undefined) {
-    for (let price of noise.price) {
+  if (tempNoise.price.length !== undefined) {
+    for (let price of tempNoise.price) {
       price = parseFloat(price);
       noisePrice.push(price);
     }
   }
   else {
-    noisePrice = noisePrice;
+    noisePrice = tempNoise.price;
   }
 
   // Built in function returns the max/min of prices array
@@ -142,13 +148,25 @@ function noiseGraph() {
   let graphHeight = graphBottom - graphTop;
   
   // Creates labels for min/max on y axis
-  textSize(w*0.05);
+  textSize(w*0.04);
   textAlign(RIGHT, CENTER);
   noStroke();
   fill(0);
-  text(maxP, graphLeft + padding - 5, graphTop - padding/2);
-  text(minP, graphLeft + padding - 5, graphBottom + padding/2);
+  drawingContext.setLineDash([10, 10]);
+  let minY = graphBottom - padding/2;
+  let maxY = graphTop + padding/2;
+  stroke('green');
+  line(graphLeft, maxY, graphRight, maxY);
+  noStroke();
+  text(`$${maxP}`, graphLeft - 5, maxY);
+  
+  stroke('red');
+  line(graphLeft, minY, graphRight, minY);
+  noStroke();
+  text(`$${minP}`, graphLeft - 5, minY);
   textAlign(CENTER, CENTER);
+  stroke(0);
+  drawingContext.setLineDash([]);
   
   // Sets up x and y axis for graph
   stroke(0);
@@ -161,7 +179,7 @@ function noiseGraph() {
   beginShape();
   for (let i = 0; i < noisePrice.length; i++) {
     let x = map(i, 0, noisePrice.length - 1, graphLeft, graphRight);
-    let y = map(noisePrice[i], minP, maxP, graphBottom - padding, graphTop + padding);
+    let y = map(noisePrice[i], minP, maxP, graphBottom - padding/2, graphTop + padding/2);
     vertex(x, y);
   }
   endShape();
