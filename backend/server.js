@@ -1,6 +1,9 @@
 // Setting up dotenv so values from .env can be used in code without exposing secrets
 require('dotenv').config();
 
+// Setting up database used in project
+const db = require('./database');
+
 // Setting up libraries used in project
 const express = require('express');
 const axios = require('axios');
@@ -56,16 +59,15 @@ function noiseStock() {
     if (noisePrice < 0) {
         noisePrice = 0;
     }
-    noisePriceArray.push(noisePrice.toFixed(2));
-    time += timeScale;
-    let value = stocks.get('NOIS');
-    value.price = noisePriceArray;
 
-    // Locks the priceArray to 200 items to prevent slowing down/crashing server
-    if (noisePriceArray.length > 200) {
-        noisePriceArray.shift();
-    }
-    
+    db.appendNoisPrice(noisePrice);
+
+    // noisePriceArray.push(noisePrice.toFixed(2));
+    time += timeScale;
+
+    let value = stocks.get('NOIS');
+    value.price = db.getNoisPrices;
+
     stocks.set('NOIS', value);
     setTimeout(noiseStock, 5000);
 }
