@@ -60,13 +60,13 @@ function noiseStock() {
         noisePrice = 0;
     }
 
-    db.appendNoisPrice(noisePrice);
+    db.appendNoisPrice(noisePrice.toFixed(2));
 
     // noisePriceArray.push(noisePrice.toFixed(2));
     time += timeScale;
 
     let value = stocks.get('NOIS');
-    value.price = db.getNoisPrices;
+    value.price = db.getNoisPrices();
 
     stocks.set('NOIS', value);
     setTimeout(noiseStock, 5000);
