@@ -98,7 +98,7 @@ function createButtons() {
         text(`${value.name}\nPrice Loading...`, buttons[index].x, buttons[index].y);
       }
       else {
-        text(`${value.name}\n${value.price[value.price.length - 1]}`, buttons[index].x, buttons[index].y);
+        text(`${value.name}\n${value.price[value.price.length - 1].toFixed(2)}`, buttons[index].x, buttons[index].y);
       }
     }
 
@@ -134,18 +134,15 @@ function noiseGraph() {
   }
 
   // Built in function returns the max/min of prices array
-  let minP = min(noisePrice);
-  let maxP = max(noisePrice);
+  let minP = min(noisePrice).toFixed(2);
+  let maxP = max(noisePrice).toFixed(2);
 
   // Sets up variables needed to create the graph
-  let range = maxP - minP;
   let padding = w * 0.1;
   let graphLeft = width/2 - w/2 + padding;
   let graphRight = width/2 + w/2 - padding;
   let graphTop = height/2 - w/2 + padding;
   let graphBottom = height/2 + w/2 - padding;
-  let graphWidth = graphRight - graphLeft;
-  let graphHeight = graphBottom - graphTop;
   
   // Creates labels for min/max on y axis
   textSize(w*0.04);
@@ -183,6 +180,10 @@ function noiseGraph() {
     vertex(x, y);
   }
   endShape();
+
+  // Creates current price on right side of graph
+  let currentPrice = map()
+  text()
 
 }
 

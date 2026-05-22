@@ -60,9 +60,9 @@ function noiseStock() {
         noisePrice = 0;
     }
 
-    db.appendNoisPrice(noisePrice.toFixed(2));
+    noisePrice = Math.round(noisePrice*100)/100
+    db.appendNoisPrice(noisePrice);
 
-    // noisePriceArray.push(noisePrice.toFixed(2));
     time += timeScale;
 
     let value = stocks.get('NOIS');
@@ -77,6 +77,12 @@ app.get('/prices', (req, res) => {
     // Creates a object consisting of all map keys and its coresponding value
     let object = Object.fromEntries(stocks);
     res.json(object);
+})
+
+// '/buy' endpoint to buy stocks
+app.get('/buy/:symbol', (req, res) => {
+    let symbol = req.params.symbol.toUpperCase();
+    
 })
 
 // '/prices/:symbol' endpoint displays only requested stock (Ex. '/prices/aapl' will give only the price for apple)
