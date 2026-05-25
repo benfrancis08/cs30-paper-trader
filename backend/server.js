@@ -80,9 +80,17 @@ app.get('/prices', (req, res) => {
 })
 
 // '/buy' endpoint to buy stocks
-app.get('/buy/:symbol', (req, res) => {
+app.get('/buy/:symbol/:amount', (req, res) => {
     let symbol = req.params.symbol.toUpperCase();
-    
+    let amount = req.params.amount;
+    if (symbol === 'NOIS') {
+        let tempNoise = stocks.get(symbol);
+        let currentPrice =tempNoise.price[tempNoise.price.length - 1];
+    }
+    else {
+        let tempStock = stocks.get(symbol);
+        let currentPrice = tempStock.price;
+    }
 })
 
 // '/prices/:symbol' endpoint displays only requested stock (Ex. '/prices/aapl' will give only the price for apple)
