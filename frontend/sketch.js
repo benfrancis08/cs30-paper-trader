@@ -10,6 +10,7 @@ let price;
 let buttons;
 let tempNoise;
 let clicked = undefined;
+let noisePrice = [];
 
 let stocks = new Map();
 
@@ -65,8 +66,15 @@ async function getStocks() {
     }
 
     let tempCheck = stocks.get('NOIS');
-    if (tempCheck.price.length !== undefined) {
+    console.log(tempCheck);
+    if (tempCheck.price === 0) {
       tempNoise = stocks.get('NOIS');
+    }
+    else if (noisePrice[0] !== 'Price Loading...') {
+      tempNoise = noisePrice;
+    }
+    else {
+      tempNoise = 'Price Loading...';
     }
   }
   catch(error) {
@@ -121,16 +129,22 @@ function noiseGraph() {
   rect(width/2, height/2, w*1.15, w);
   
   // Ends function if stocks is currently being called/updated from backend
-  let noisePrice = [];
   // Turns all strings (from toFixed) back into numbers in price array
-  if (tempNoise.price.length !== undefined) {
+  if (tempNoise === 'Price Loading...') {
+    fill(0);
+    noisePrice = ['Price Loading...'];
+    text(`${noisePrice}`, width/2, height/2);
+    return;
+  }
+  else if (tempNoise.price.length === undefined) {
+    noisePrice = tempNoise.price;
+  }
+  else {
+    noisePrice = [];
     for (let price of tempNoise.price) {
       price = parseFloat(price);
       noisePrice.push(price);
     }
-  }
-  else {
-    noisePrice = tempNoise.price;
   }
 
   // Built in function returns the max/min of prices array
@@ -182,8 +196,10 @@ function noiseGraph() {
   endShape();
 
   // Creates current price on right side of graph
-  let currentPrice = map()
-  text()
+  fill(0);
+  noStroke();
+  let currentPriceY = map(noisePrice[noisePrice.length - 1], minP, maxP, graphBottom - padding/2, graphTop + padding/2);
+  text(`$${noisePrice[noisePrice.length - 1]}`, graphRight + padding - 5, currentPriceY);
 
 }
 
