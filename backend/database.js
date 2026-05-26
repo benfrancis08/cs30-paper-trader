@@ -1,5 +1,3 @@
-// Created by Claude.ai
-// https://claude.ai/share/deb0d47e-b35b-4ba8-b770-6354e61f44fc
 
 
 // database.js
@@ -59,6 +57,16 @@ db.exec(`
     price     REAL    NOT NULL,
     timestamp INTEGER NOT NULL DEFAULT (unixepoch())
   );
+
+  -- NOIS stats: single row storing the all-time high and low.
+  -- Kept separate from nois_prices so records survive the 200-point rolling cap.
+  CREATE TABLE IF NOT EXISTS nois_stats (
+    id            INTEGER PRIMARY KEY CHECK(id = 1),  -- Enforces exactly one row
+    alltime_high  REAL    NOT NULL DEFAULT 0,
+    alltime_low   REAL    NOT NULL DEFAULT 9999999,
+    high_at       INTEGER NOT NULL DEFAULT (unixepoch()),
+    low_at        INTEGER NOT NULL DEFAULT (unixepoch())
+  );
 `);
 
 
@@ -68,6 +76,14 @@ db.exec(`
 db.prepare(`
   INSERT OR IGNORE INTO users (id, username, cash_balance)
   VALUES (1, 'player', 10000.00)
+`).run();
+
+// ─── Seed NOIS stats row ──────────────────────────────────────────────────────
+// id = 1 is enforced by the CHECK constraint above, so there can only ever be
+// one row. INSERT OR IGNORE on restarts keeps existing records intact.
+db.prepare(`
+  INSERT OR IGNORE INTO nois_stats (id, alltime_high, alltime_low)
+  VALUES (1, 0, 9999999)
 `).run();
 
 
@@ -139,8 +155,9 @@ function getTransactions(userId = 1) {
 // ─── NOIS price history queries ───────────────────────────────────────────────
 // Mirrors the in-memory 200-point cap from server.js
 
-// Appends a new price and trims any rows beyond 200 (keeps the most recent)
-function appendNoisPrice(price) {
+// Appends a new price, trims rows beyond 200, and updates all-time high/low.
+// All three writes happen in one transaction so they never get out of sync.
+const appendNoisPrice = db.transaction((price) => {
   db.prepare('INSERT INTO nois_prices (price) VALUES (?)').run(price);
 
   // Count rows and delete oldest ones if over the 200-point cap
@@ -155,12 +172,33 @@ function appendNoisPrice(price) {
       )
     `).run(count - 200);
   }
-}
+
+  // Update all-time high if this price beats the stored record
+  const stats = db.prepare('SELECT * FROM nois_stats WHERE id = 1').get();
+  if (price > stats.alltime_high) {
+    db.prepare(`
+      UPDATE nois_stats SET alltime_high = ?, high_at = unixepoch() WHERE id = 1
+    `).run(price);
+  }
+
+  // Update all-time low if this price beats the stored record
+  if (price < stats.alltime_low) {
+    db.prepare(`
+      UPDATE nois_stats SET alltime_low = ?, low_at = unixepoch() WHERE id = 1
+    `).run(price);
+  }
+});
 
 // Returns the stored price history as a plain array of numbers, oldest first
 function getNoisPrices() {
   const rows = db.prepare('SELECT price FROM nois_prices ORDER BY id ASC').all();
   return rows.map(row => row.price);
+}
+
+// Returns the all-time high/low stats: { alltime_high, alltime_low, high_at, low_at }
+// high_at and low_at are Unix timestamps (seconds) of when each record was set
+function getNoisStats() {
+  return db.prepare('SELECT alltime_high, alltime_low, high_at, low_at FROM nois_stats WHERE id = 1').get();
 }
 
 
@@ -209,5 +247,6 @@ module.exports = {
   getTransactions,
   appendNoisPrice,
   getNoisPrices,
+  getNoisStats,    // { alltime_high, alltime_low, high_at, low_at }
   executeTrade,    // Use this for all trades — keeps everything atomic
 };

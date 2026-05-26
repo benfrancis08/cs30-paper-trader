@@ -42,18 +42,28 @@ async function autoUpdatePrice() {
     setTimeout(autoUpdatePrice, 10000);
 }
 
+
 // Variables used for the noise stock
 let noisePriceArray = [];
-let noisePrice = 200;
 let time = 0;
-let timeScale = 0.05;
-let volatility = 5;
+let noisePrice;
+const TIME_SCALE = 0.05;
+const VOLATILITY = 5;
+
+let tempPrice = db.getNoisPrices();
+if (tempPrice.length === 0) {
+    noisePrice = 200;
+}
+else {
+    noisePrice = tempPrice[tempPrice.length - 1];
+}
+
 const noise2D = createNoise2D();
 
 // Creates the prices based of the noise value and pushes it into a array then gets an updated price every 5 sec
 function noiseStock() {
     let n = noise2D(time, 0);
-    let change = volatility * n;
+    let change = VOLATILITY * n;
     change += 0.1;
     noisePrice += change;
     if (noisePrice < 0) {
@@ -63,7 +73,7 @@ function noiseStock() {
     noisePrice = Math.round(noisePrice*100)/100
     db.appendNoisPrice(noisePrice);
 
-    time += timeScale;
+    time += TIME_SCALE;
 
     let value = stocks.get('NOIS');
     value.price = db.getNoisPrices();
@@ -80,18 +90,34 @@ app.get('/prices', (req, res) => {
 })
 
 // '/buy' endpoint to buy stocks
-// app.get('/buy/:symbol/:amount', (req, res) => {
-//     let symbol = req.params.symbol.toUpperCase();
-//     let amount = req.params.amount;
-//     if (symbol === 'NOIS') {
-//         let tempNoise = stocks.get(symbol);
-//         let currentPrice =tempNoise.price[tempNoise.price.length - 1];
-//     }
-//     else {
-//         let tempStock = stocks.get(symbol);
-//         let currentPrice = tempStock.price;
-//     }
-// })
+app.get('/buy/:symbol/:amount', (req, res) => {
+    let symbol = req.params.symbol.toUpperCase();
+    let amount = req.params.amount;
+    if (symbol === 'NOIS') {
+        let tempNoise = stocks.get(symbol);
+        let currentPrice =tempNoise.price[tempNoise.price.length - 1];
+    }
+    else {
+        let tempStock = stocks.get(symbol);
+        let currentPrice = tempStock.price;
+    }
+    db.executeTrade(symbol, 'buy', amount, currentPrice);
+})
+
+// '/sell' endpoint to sell stocks
+app.get('/sell/:symbol/:amount', (req, res) => {
+    let symbol = req.params.symbol.toUpperCase();
+    let amount = req.params.amount;
+    if (symbol === 'NOIS') {
+        let tempNoise = stocks.get(symbol);
+        let currentPrice =tempNoise.price[tempNoise.price.length - 1];
+    }
+    else {
+        let tempStock = stocks.get(symbol);
+        let currentPrice = tempStock.price;
+    }
+    db.executeTrade(symbol, 'sell', amount, currentPrice);
+})
 
 // '/prices/:symbol' endpoint displays only requested stock (Ex. '/prices/aapl' will give only the price for apple)
 
