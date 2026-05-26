@@ -66,15 +66,14 @@ async function getStocks() {
     }
 
     let tempCheck = stocks.get('NOIS');
-    console.log(tempCheck);
-    if (tempCheck.price === 0) {
-      tempNoise = stocks.get('NOIS');
+    if (tempCheck.price === 0 && noisePrice.length === 0) {
+      tempNoise = 'Loading';
     }
-    else if (noisePrice[0] !== 'Price Loading...') {
+    else if (tempCheck.price === 0 && noisePrice.length !== 0) {
       tempNoise = noisePrice;
     }
     else {
-      tempNoise = 'Price Loading...';
+      tempNoise = stocks.get('NOIS');
     }
   }
   catch(error) {
@@ -130,14 +129,13 @@ function noiseGraph() {
   
   // Ends function if stocks is currently being called/updated from backend
   // Turns all strings (from toFixed) back into numbers in price array
-  if (tempNoise === 'Price Loading...') {
+  if (tempNoise === 'Loading') {
     fill(0);
-    noisePrice = ['Price Loading...'];
-    text(`${noisePrice}`, width/2, height/2);
+    text('Price Loading...', width/2, height/2);
     return;
   }
-  else if (tempNoise.price.length === undefined) {
-    noisePrice = tempNoise.price;
+  else if (Array.isArray(tempNoise)) {
+    noisePrice = tempNoise;
   }
   else {
     noisePrice = [];
