@@ -29,7 +29,9 @@ async function setup() {
     {x: BUTTON_WIDTH/2, y: BUTTON_HEIGHT*4.5, w: BUTTON_WIDTH, h: BUTTON_HEIGHT},
     {x: BUTTON_WIDTH/2, y: BUTTON_HEIGHT*5.5, w: BUTTON_WIDTH, h: BUTTON_HEIGHT}
   ];
-  
+  buySellButtons = [
+
+  ];
   textAlign(CENTER, CENTER);
   rectMode(CENTER);
 }
@@ -128,7 +130,6 @@ function noiseGraph() {
   rect(width/2, height/2, w*1.15, w);
   
   // Ends function if stocks is currently being called/updated from backend
-  // Turns all strings (from toFixed) back into numbers in price array
   if (tempNoise === 'Loading') {
     fill(0);
     text('Price Loading...', width/2, height/2);
@@ -198,6 +199,14 @@ function noiseGraph() {
   noStroke();
   let currentPriceY = map(noisePrice[noisePrice.length - 1], minP, maxP, graphBottom - padding/2, graphTop + padding/2);
   text(`$${noisePrice[noisePrice.length - 1]}`, graphRight + padding - 5, currentPriceY);
+
+  // Creates alltime high/low values on top and bottom
+  let value = stocks.get('NOIS');
+  text(`Alltime High: $${value.high}`, width/2, graphTop - padding/2);
+  text(`Alltime Low: $${value.low}`, width/2, graphBottom + padding/2);
+}
+
+function buy() {
 
 }
 

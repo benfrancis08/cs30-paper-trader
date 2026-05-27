@@ -1,4 +1,5 @@
-
+// Created with Claude.ai
+// https://claude.ai/share/deb0d47e-b35b-4ba8-b770-6354e61f44fc
 
 // database.js
 // Handles all database setup and operations for Paper Trader

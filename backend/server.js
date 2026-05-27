@@ -75,10 +75,22 @@ function noiseStock() {
 
     time += TIME_SCALE;
 
+    // Setting the price object and coresponding price into the 'NOIS' map value
     let value = stocks.get('NOIS');
     value.price = db.getNoisPrices();
+    
+    // Getting noise alltime highs/lows from db
+    let stats = db.getNoisStats();
+    let high = stats.alltime_high;
+    let low = stats.alltime_low;
+    
+    // Setting the high/low object and coresponding price into the 'NOIS' map value
+    value.high = high;
+    value.low = low;
 
+    // Reseting the new value into the 'NOIS' map
     stocks.set('NOIS', value);
+
     setTimeout(noiseStock, 5000);
 }
 
@@ -118,19 +130,6 @@ app.get('/sell/:symbol/:amount', (req, res) => {
     }
     db.executeTrade(symbol, 'sell', amount, currentPrice);
 })
-
-// '/prices/:symbol' endpoint displays only requested stock (Ex. '/prices/aapl' will give only the price for apple)
-
-// app.get('/prices/:symbol', (req, res) => {
-//     let symbol = req.params.symbol.toUpperCase();
-//     let stock = stockPrices.find(s => s.stock === symbol);
-//     if (stock === undefined) {
-//         res.json(`Stock not found. Please choose from this list: ${STOCKS}`);
-//     }
-//     else {
-//         res.json(stock);
-//     }
-// });
 
 // Creates a server that listens for above endpoints and starts the autoUpdatePrice and noiseStock loop functions
 app.listen(process.env.PORT, async () => {
