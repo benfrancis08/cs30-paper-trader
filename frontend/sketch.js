@@ -8,9 +8,13 @@
 let currentTime;
 let price;
 let buttons;
+let buySellButtons;
 let tempNoise;
 let clicked = undefined;
 let noisePrice = [];
+
+let BUTTON_WIDTH;
+let BUTTON_HEIGHT;
 
 let stocks = new Map();
 
@@ -19,8 +23,9 @@ async function setup() {
   currentTime = millis();
   await getStocks();
 
-  const BUTTON_WIDTH = width/6;
-  const BUTTON_HEIGHT = height/10;
+  BUTTON_WIDTH = width/6;
+  BUTTON_HEIGHT = height/10;
+
   buttons = [
     {x: BUTTON_WIDTH/2, y: BUTTON_HEIGHT/2, w: BUTTON_WIDTH, h: BUTTON_HEIGHT},
     {x: BUTTON_WIDTH/2, y: BUTTON_HEIGHT*1.5, w: BUTTON_WIDTH, h: BUTTON_HEIGHT},
@@ -30,8 +35,10 @@ async function setup() {
     {x: BUTTON_WIDTH/2, y: BUTTON_HEIGHT*5.5, w: BUTTON_WIDTH, h: BUTTON_HEIGHT}
   ];
   buySellButtons = [
-
+    {x: width*1/3, y: height*5/6, w: BUTTON_WIDTH, h: BUTTON_HEIGHT, c: 'green', l: 'Buy'},
+    {x: width*2/3, y: height*5/6, w: BUTTON_WIDTH, h: BUTTON_HEIGHT, c: 'red', l: 'Sell'}
   ];
+
   textAlign(CENTER, CENTER);
   rectMode(CENTER);
 }
@@ -50,7 +57,8 @@ function draw() {
   else if (clicked !== undefined) {
     createButtons();
     let tempPrice = stocks.get(clicked);
-    text(`${clicked}\n${tempPrice.price}`, width/2, height/2);
+    textSize(25);
+    text(`${clicked}\n$${tempPrice.price}`, width/2, height/2);
   }
   else {
     createButtons();
@@ -100,19 +108,40 @@ function createButtons() {
     fill(0);
     noStroke();
     if (key !== 'NOIS') {
-      text(`${value.name}\n${value.price}`, buttons[index].x, buttons[index].y);
+      text(`${value.name}\n$${value.price}`, buttons[index].x, buttons[index].y);
     }
     else {
       if (value.price.length === undefined) {
         text(`${value.name}\nPrice Loading...`, buttons[index].x, buttons[index].y);
       }
       else {
-        text(`${value.name}\n${value.price[value.price.length - 1].toFixed(2)}`, buttons[index].x, buttons[index].y);
+        text(`${value.name}\n$${value.price[value.price.length - 1].toFixed(2)}`, buttons[index].x, buttons[index].y);
       }
     }
 
     buttons[index].i = key;
     index ++;
+  }
+
+  if (clicked !== undefined) {
+    const RESIZING_FACTOR = 25;
+    for (let button of buySellButtons) {
+
+      if (mouseIsInButton(button)) {
+        button.w = BUTTON_WIDTH + RESIZING_FACTOR;
+        button.h = BUTTON_HEIGHT + RESIZING_FACTOR;
+      }
+      else {
+        button.w = BUTTON_WIDTH;
+        button.h = BUTTON_HEIGHT;
+      }
+
+      fill(button.c);
+      rect(button.x, button.y, button.w, button.h);
+      fill(0);
+      textSize(button.w/4);
+      text(button.l, button.x, button.y);
+    }
   }
 }
 
