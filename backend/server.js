@@ -105,15 +105,24 @@ app.get('/prices', (req, res) => {
 app.get('/buy/:symbol/:amount', (req, res) => {
     let symbol = req.params.symbol.toUpperCase();
     let amount = req.params.amount;
+    let currentPrice;
+
     if (symbol === 'NOIS') {
         let tempNoise = stocks.get(symbol);
-        let currentPrice =tempNoise.price[tempNoise.price.length - 1];
+        currentPrice =tempNoise.price[tempNoise.price.length - 1];
     }
     else {
         let tempStock = stocks.get(symbol);
-        let currentPrice = tempStock.price;
+        currentPrice = tempStock.price;
     }
-    db.executeTrade(symbol, 'buy', amount, currentPrice);
+
+    try {
+        db.executeTrade(symbol, 'buy', amount, currentPrice);
+        res.json({success: true, message: `Successfully bought ${amount} shares of ${symbol}`});
+    } 
+    catch (error) {
+        res.status(400).json({success: false, message: error.message});
+    }
 })
 
 // '/sell' endpoint to sell stocks

@@ -176,49 +176,52 @@ function noiseGraph() {
   }
 
   // Built in function returns the max/min of prices array
-  let minP = min(noisePrice).toFixed(2);
-  let maxP = max(noisePrice).toFixed(2);
+  let minP = min(noisePrice);
+  let maxP = max(noisePrice);
 
   // Sets up variables needed to create the graph
-  let padding = w * 0.1;
-  let graphLeft = width/2 - w/2 + padding;
-  let graphRight = width/2 + w/2 - padding;
-  let graphTop = height/2 - w/2 + padding;
-  let graphBottom = height/2 + w/2 - padding;
+  const PADDING = w * 0.1;
+  const GRAPH_LEFT = width/2 - w/2 + padding;
+  const GRAPH_RIGHT = width/2 + w/2 - padding;
+  const GRAPH_TOP = height/2 - w/2 + padding;
+  const GRAPH_BOTTOM = height/2 + w/2 - padding;
+  const TEXT_SIZE_FACTOR = 0.04;
+  const LINE_DASH_SPACE = 10;
+  const PRICE_PADDING = 5;
+  const MIN_Y = GRAPH_BOTTOM - PADDING/2;
+  const MAX_Y = GRAPH_TOP + PADDING/2;
   
   // Creates labels for min/max on y axis
-  textSize(w*0.04);
+  textSize(w*TEXT_SIZE_FACTOR);
   textAlign(RIGHT, CENTER);
   noStroke();
   fill(0);
-  drawingContext.setLineDash([10, 10]);
-  let minY = graphBottom - padding/2;
-  let maxY = graphTop + padding/2;
+  drawingContext.setLineDash([LINE_DASH_SPACE, LINE_DASH_SPACE]);
   stroke('green');
-  line(graphLeft, maxY, graphRight, maxY);
+  line(GRAPH_LEFT, MAX_Y, GRAPH_RIGHT, MAX_Y);
   noStroke();
-  text(`$${maxP}`, graphLeft - 5, maxY);
+  text(`$${maxP}`, GRAPH_LEFT - PRICE_PADDING, MAX_Y);
   
   stroke('red');
-  line(graphLeft, minY, graphRight, minY);
+  line(GRAPH_LEFT, MIN_Y, GRAPH_RIGHT, MIN_Y);
   noStroke();
-  text(`$${minP}`, graphLeft - 5, minY);
+  text(`$${minP}`, GRAPH_LEFT - PRICE_PADDING, MIN_Y);
   textAlign(CENTER, CENTER);
   stroke(0);
   drawingContext.setLineDash([]);
   
   // Sets up x and y axis for graph
   stroke(0);
-  line(graphLeft, graphBottom, graphRight, graphBottom); // x axis
-  line(graphLeft, graphTop, graphLeft, graphBottom); // y axis
+  line(GRAPH_LEFT, GRAPH_BOTTOM, GRAPH_RIGHT, GRAPH_BOTTOM); // x axis
+  line(GRAPH_LEFT, GRAPH_TOP, GRAPH_LEFT, GRAPH_BOTTOM); // y axis
 
 
   // Creates a single shape consiting all 200 points with lines connecting them
   fill(255);
   beginShape();
   for (let i = 0; i < noisePrice.length; i++) {
-    let x = map(i, 0, noisePrice.length - 1, graphLeft, graphRight);
-    let y = map(noisePrice[i], minP, maxP, graphBottom - padding/2, graphTop + padding/2);
+    let x = map(i, 0, noisePrice.length - 1, GRAPH_LEFT, GRAPH_RIGHT);
+    let y = map(noisePrice[i], minP, maxP, GRAPH_BOTTOM - PADDING/2, GRAPH_TOP + PADDING/2);
     vertex(x, y);
   }
   endShape();
@@ -226,16 +229,20 @@ function noiseGraph() {
   // Creates current price on right side of graph
   fill(0);
   noStroke();
-  let currentPriceY = map(noisePrice[noisePrice.length - 1], minP, maxP, graphBottom - padding/2, graphTop + padding/2);
-  text(`$${noisePrice[noisePrice.length - 1]}`, graphRight + padding - 5, currentPriceY);
+  let currentPriceY = map(noisePrice[noisePrice.length - 1], minP, maxP, GRAPH_BOTTOM - PADDING/2, GRAPH_TOP + PADDING/2);
+  text(`$${noisePrice[noisePrice.length - 1]}`, GRAPH_RIGHT + PADDING - PRICE_PADDING, currentPriceY);
 
   // Creates alltime high/low values on top and bottom
   let value = stocks.get('NOIS');
-  text(`Alltime High: $${value.high}`, width/2, graphTop - padding/2);
-  text(`Alltime Low: $${value.low}`, width/2, graphBottom + padding/2);
+  text(`Alltime High: $${value.high}`, width/2, GRAPH_TOP - PADDING/2);
+  text(`Alltime Low: $${value.low}`, width/2, GRAPH_BOTTOM + PADDING/2);
 }
 
 function buy() {
+
+}
+
+function sell() {
 
 }
 
@@ -251,6 +258,15 @@ function mouseReleased() {
   for (let button of buttons) {
     if (mouseIsInButton(button)) {
       clicked = button.i;
+    }
+  }
+
+  if (clicked !== undefined) {
+    if (mouseIsInButton(buySellButtons[0])) {
+      buy();
+    }
+    if (mouseIsInButton(buySellButtons[1])) {
+      sell();
     }
   }
 }
