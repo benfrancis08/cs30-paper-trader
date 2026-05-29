@@ -9,7 +9,11 @@ let currentTime;
 let price;
 let buttons;
 let buySellButtons;
+let priceAmountButtons;
 let tempNoise;
+let textBox;
+let buying = false;
+let selling = false;
 let clicked = undefined;
 let noisePrice = [];
 
@@ -22,10 +26,10 @@ async function setup() {
   createCanvas(windowWidth, windowHeight);
   currentTime = millis();
   await getStocks();
-
+  
   BUTTON_WIDTH = width/6;
   BUTTON_HEIGHT = height/10;
-
+  
   buttons = [
     {x: BUTTON_WIDTH/2, y: BUTTON_HEIGHT/2, w: BUTTON_WIDTH, h: BUTTON_HEIGHT},
     {x: BUTTON_WIDTH/2, y: BUTTON_HEIGHT*1.5, w: BUTTON_WIDTH, h: BUTTON_HEIGHT},
@@ -38,6 +42,14 @@ async function setup() {
     {x: width*1/3, y: height*5/6, w: BUTTON_WIDTH, h: BUTTON_HEIGHT, c: 'green', l: 'Buy'},
     {x: width*2/3, y: height*5/6, w: BUTTON_WIDTH, h: BUTTON_HEIGHT, c: 'red', l: 'Sell'}
   ];
+  priceAmountButtons = [
+    {x: width/2 - BUTTON_WIDTH/1.5/2, y: height/2.1, w: BUTTON_WIDTH/1.5, h: BUTTON_HEIGHT/3, l: 'Amount'},
+    {x: width/2 + BUTTON_WIDTH/1.5/2, y: height/2.1, w: BUTTON_WIDTH/1.5, h: BUTTON_HEIGHT/3, l: 'Price'}
+  ];
+  
+  textBox = createInput();
+  textBox.center();
+  textBox.hide();
 
   textAlign(CENTER, CENTER);
   rectMode(CENTER);
@@ -58,10 +70,16 @@ function draw() {
     createButtons();
     let tempPrice = stocks.get(clicked);
     textSize(25);
-    text(`${clicked}\n$${tempPrice.price}`, width/2, height/2);
+    text(`${clicked}\n$${tempPrice.price}`, width/2, height/5);
   }
   else {
     createButtons();
+  }
+  if (buying) {
+    buy();
+  }
+  if (selling) {
+    sell();
   }
 }
 
@@ -156,12 +174,12 @@ function noiseGraph() {
   }
   fill(255);
   noStroke();
-  rect(width/2, height/2, w*1.15, w);
+  rect(width/2, height/5, w*1.15, w);
   
   // Ends function if stocks is currently being called/updated from backend
   if (tempNoise === 'Loading') {
     fill(0);
-    text('Price Loading...', width/2, height/2);
+    text('Price Loading...', width/2, height/5);
     return;
   }
   else if (Array.isArray(tempNoise)) {
@@ -181,10 +199,10 @@ function noiseGraph() {
 
   // Sets up variables needed to create the graph
   const PADDING = w * 0.1;
-  const GRAPH_LEFT = width/2 - w/2 + padding;
-  const GRAPH_RIGHT = width/2 + w/2 - padding;
-  const GRAPH_TOP = height/2 - w/2 + padding;
-  const GRAPH_BOTTOM = height/2 + w/2 - padding;
+  const GRAPH_LEFT = width/2 - w/2 + PADDING;
+  const GRAPH_RIGHT = width/2 + w/2 - PADDING;
+  const GRAPH_TOP = height/5 - w/2 + PADDING;
+  const GRAPH_BOTTOM = height/5 + w/2 - PADDING;
   const TEXT_SIZE_FACTOR = 0.04;
   const LINE_DASH_SPACE = 10;
   const PRICE_PADDING = 5;
@@ -239,6 +257,36 @@ function noiseGraph() {
 }
 
 function buy() {
+  let w;
+  let amount = true;
+  let price = false;
+
+  if (width > height) {
+    w = height/1.6;
+  }
+  else {
+    w = width/1.6;
+  }
+  
+  const PADDING = 15;
+  const TEXT_SIZE_FACTOR = 0.05;
+  
+  fill(255);
+  stroke(0);
+  rect(width/2, height/2, w, w/2);
+  
+  fill('green');
+  noStroke();
+  textSize(w*TEXT_SIZE_FACTOR);
+  text('Buy', width/2, height/2 - w/4 + PADDING);
+
+  for (let button of priceAmountButtons) {
+    fill(255);
+    stroke(0);
+    rect(button.x, button.y, button.w, button.h);
+  }
+
+  textBox.show();
 
 }
 
@@ -263,6 +311,7 @@ function mouseReleased() {
 
   if (clicked !== undefined) {
     if (mouseIsInButton(buySellButtons[0])) {
+      buying = !buying;
       buy();
     }
     if (mouseIsInButton(buySellButtons[1])) {
