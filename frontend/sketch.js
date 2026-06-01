@@ -43,8 +43,8 @@ async function setup() {
     {x: width*2/3, y: height*5/6, w: BUTTON_WIDTH, h: BUTTON_HEIGHT, c: 'red', l: 'Sell'}
   ];
   priceAmountButtons = [
-    {x: width/2 - BUTTON_WIDTH/1.5/2, y: height/2.1, w: BUTTON_WIDTH/1.5, h: BUTTON_HEIGHT/3, l: 'Amount'},
-    {x: width/2 + BUTTON_WIDTH/1.5/2, y: height/2.1, w: BUTTON_WIDTH/1.5, h: BUTTON_HEIGHT/3, l: 'Price'}
+    {x: width/2 - BUTTON_WIDTH/3, y: height/2.2, w: BUTTON_WIDTH/1.5, h: BUTTON_HEIGHT/3, l: 'Amount'},
+    {x: width/2 + BUTTON_WIDTH/3, y: height/2.2, w: BUTTON_WIDTH/1.5, h: BUTTON_HEIGHT/3, l: 'Price'}
   ];
   
   textBox = createInput();
@@ -174,12 +174,12 @@ function noiseGraph() {
   }
   fill(255);
   noStroke();
-  rect(width/2, height/5, w*1.15, w);
+  rect(width/2, height/3, w*1.15, w);
   
   // Ends function if stocks is currently being called/updated from backend
   if (tempNoise === 'Loading') {
     fill(0);
-    text('Price Loading...', width/2, height/5);
+    text('Price Loading...', width/2, height/3);
     return;
   }
   else if (Array.isArray(tempNoise)) {
@@ -201,8 +201,8 @@ function noiseGraph() {
   const PADDING = w * 0.1;
   const GRAPH_LEFT = width/2 - w/2 + PADDING;
   const GRAPH_RIGHT = width/2 + w/2 - PADDING;
-  const GRAPH_TOP = height/5 - w/2 + PADDING;
-  const GRAPH_BOTTOM = height/5 + w/2 - PADDING;
+  const GRAPH_TOP = height/3 - w/2 + PADDING;
+  const GRAPH_BOTTOM = height/3 + w/2 - PADDING;
   const TEXT_SIZE_FACTOR = 0.04;
   const LINE_DASH_SPACE = 10;
   const PRICE_PADDING = 5;
@@ -281,9 +281,20 @@ function buy() {
   text('Buy', width/2, height/2 - w/4 + PADDING);
 
   for (let button of priceAmountButtons) {
-    fill(255);
+    if (amount && button.l === 'Amount') {
+      fill(100);
+    }
+    else {
+      fill(255);
+    }
+
     stroke(0);
     rect(button.x, button.y, button.w, button.h);
+
+    noStroke();
+    fill(0);
+    textSize(button.w/6);
+    text(button.l, button.x, button.y);
   }
 
   textBox.show();
@@ -312,7 +323,9 @@ function mouseReleased() {
   if (clicked !== undefined) {
     if (mouseIsInButton(buySellButtons[0])) {
       buying = !buying;
-      buy();
+      if (!buying) {
+        textBox.hide();
+      }
     }
     if (mouseIsInButton(buySellButtons[1])) {
       sell();
