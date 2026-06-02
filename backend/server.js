@@ -21,6 +21,14 @@ stocks.set('MSFT', {name: 'Microsoft Corp.'});
 stocks.set('GOOG', {name: 'Google LLC'});
 stocks.set('NOIS', {name: 'Noise'})
 
+// Switching to crypto
+// stocks.set('COINBASE:BTC-USD', {name: 'Bitcoin'});
+// stocks.set('COINBASE:ETH-USD', {name: 'Ethereum'});
+// stocks.set('COINBASE:XRP-USD', {name: 'XRP'});
+// stocks.set('COINBASE:SOL-USD', {name: 'Solana'});
+// stocks.set('COINBASE:DOGE-USD', {name: 'Dogecoin'});
+// stocks.set('NOIS', {name: 'Noise'})
+
 // Allows communictation between frontend and backend without errors
 // http://127.0.0.1:5500 only used for local testing REMOVE BEFORE HANDING IN
 app.use(cors({
