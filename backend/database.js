@@ -68,6 +68,18 @@ db.exec(`
     high_at       INTEGER NOT NULL DEFAULT (unixepoch()),
     low_at        INTEGER NOT NULL DEFAULT (unixepoch())
   );
+
+  -- Crypto prices: rolling 200-point history per coin, same cap as NOIS.
+  -- One table for all symbols — adding/removing coins needs no schema changes.
+  CREATE TABLE IF NOT EXISTS crypto_prices (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol    TEXT    NOT NULL,   -- e.g. 'BTC-USD', 'ETH-USD'
+    price     REAL    NOT NULL,
+    timestamp INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+
+  -- Index so per-symbol queries and trims stay fast even with many rows
+  CREATE INDEX IF NOT EXISTS idx_crypto_prices_symbol ON crypto_prices(symbol, id);
 `);
 
 
@@ -203,6 +215,42 @@ function getNoisStats() {
 }
 
 
+// ─── Crypto price history queries ────────────────────────────────────────────
+// Same 200-point rolling cap as NOIS, but keyed per symbol so all coins
+// share one table. The trim counts only rows for that symbol, not the whole table.
+
+// Appends a new price for a coin and trims that coin's history to 200 points
+const appendCryptoPrice = db.transaction((symbol, price) => {
+  db.prepare('INSERT INTO crypto_prices (symbol, price) VALUES (?, ?)').run(symbol, price);
+
+  // Count only this symbol's rows and trim the oldest if over 200
+  const count = db.prepare(
+    'SELECT COUNT(*) AS cnt FROM crypto_prices WHERE symbol = ?'
+  ).get(symbol).cnt;
+
+  if (count > 200) {
+    db.prepare(`
+      DELETE FROM crypto_prices
+      WHERE id IN (
+        SELECT id FROM crypto_prices
+        WHERE symbol = ?
+        ORDER BY id ASC
+        LIMIT ?
+      )
+    `).run(symbol, count - 200);
+  }
+});
+
+// Returns a coin's price history as a plain array of numbers, oldest first
+// e.g. getCryptoPrices('BTC-USD') -> [94000.1, 94012.5, ...]
+function getCryptoPrices(symbol) {
+  const rows = db.prepare(
+    'SELECT price FROM crypto_prices WHERE symbol = ? ORDER BY id ASC'
+  ).all(symbol);
+  return rows.map(row => row.price);
+}
+
+
 // ─── Trade helper ─────────────────────────────────────────────────────────────
 // Wraps a buy or sell in a single DB transaction so the balance, holding,
 // and history all update together — or not at all if something goes wrong.
@@ -249,5 +297,7 @@ module.exports = {
   appendNoisPrice,
   getNoisPrices,
   getNoisStats,    // { alltime_high, alltime_low, high_at, low_at }
+  appendCryptoPrice,
+  getCryptoPrices, // getCryptoPrices('BTC-USD') -> [price, price, ...]
   executeTrade,    // Use this for all trades — keeps everything atomic
 };

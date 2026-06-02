@@ -12,22 +12,14 @@ const { createNoise2D } = require('simplex-noise');
 
 const app = express();
 
-// Setting up stocks map
+// Setting up crypto map
 let stocks = new Map();
-stocks.set('AAPL', {name: 'Apple Inc.'});
-stocks.set('NVDA', {name: 'NVIDIA Corp.'});
-stocks.set('AMZN', {name: 'Amazon Inc.'});
-stocks.set('MSFT', {name: 'Microsoft Corp.'});
-stocks.set('GOOG', {name: 'Google LLC'});
-stocks.set('NOIS', {name: 'Noise'})
-
-// Switching to crypto
-// stocks.set('COINBASE:BTC-USD', {name: 'Bitcoin'});
-// stocks.set('COINBASE:ETH-USD', {name: 'Ethereum'});
-// stocks.set('COINBASE:XRP-USD', {name: 'XRP'});
-// stocks.set('COINBASE:SOL-USD', {name: 'Solana'});
-// stocks.set('COINBASE:DOGE-USD', {name: 'Dogecoin'});
-// stocks.set('NOIS', {name: 'Noise'})
+stocks.set('COINBASE:BTC-USD', {name: 'Bitcoin', symbol: 'BTC'});
+stocks.set('COINBASE:ETH-USD', {name: 'Ethereum', symbol: 'ETH'});
+stocks.set('COINBASE:XRP-USD', {name: 'XRP', symbol: 'XRP'});
+stocks.set('COINBASE:SOL-USD', {name: 'Solana', symbol: 'SOL'});
+stocks.set('COINBASE:DOGE-USD', {name: 'Dogecoin', symbol: 'DOGE'});
+stocks.set('NOIS', {name: 'Noise', symbol: 'NOIS'})
 
 // Allows communictation between frontend and backend without errors
 // http://127.0.0.1:5500 only used for local testing REMOVE BEFORE HANDING IN
@@ -39,7 +31,10 @@ app.use(cors({
 async function updatePrices() {
     for (let [key, value] of stocks) {
         let response = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${key}&token=${process.env.FINNHUB_KEY}`);
-        value.price = response.data.c;
+        
+        await db.appendCryptoPrice(value.symbol, response.data.c);
+        
+        value.price = db.getCryptoPrices(value.symbol);
         stocks.set(key, value);
     }
 }
@@ -115,14 +110,8 @@ app.get('/buy/:symbol/:amount', (req, res) => {
     let amount = req.params.amount;
     let currentPrice;
 
-    if (symbol === 'NOIS') {
-        let tempNoise = stocks.get(symbol);
-        currentPrice =tempNoise.price[tempNoise.price.length - 1];
-    }
-    else {
-        let tempStock = stocks.get(symbol);
-        currentPrice = tempStock.price;
-    }
+    let tempNoise = stocks.get(symbol);
+    currentPrice =tempNoise.price[tempNoise.price.length - 1];
 
     try {
         db.executeTrade(symbol, 'buy', amount, currentPrice);
@@ -137,15 +126,18 @@ app.get('/buy/:symbol/:amount', (req, res) => {
 app.get('/sell/:symbol/:amount', (req, res) => {
     let symbol = req.params.symbol.toUpperCase();
     let amount = req.params.amount;
-    if (symbol === 'NOIS') {
-        let tempNoise = stocks.get(symbol);
-        let currentPrice =tempNoise.price[tempNoise.price.length - 1];
+    let currentPrice;
+
+    let tempNoise = stocks.get(symbol);
+    currentPrice =tempNoise.price[tempNoise.price.length - 1];
+
+    try {
+        db.executeTrade(symbol, 'sell', amount, currentPrice);
+        res.json({success: true, message: `Successfully bought ${amount} shares of ${symbol}`});
+    } 
+    catch (error) {
+        res.status(400).json({success: false, message: error.message});
     }
-    else {
-        let tempStock = stocks.get(symbol);
-        let currentPrice = tempStock.price;
-    }
-    db.executeTrade(symbol, 'sell', amount, currentPrice);
 })
 
 // Creates a server that listens for above endpoints and starts the autoUpdatePrice and noiseStock loop functions

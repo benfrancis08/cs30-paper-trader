@@ -68,9 +68,7 @@ function draw() {
   }
   else if (clicked !== undefined) {
     createButtons();
-    let tempPrice = stocks.get(clicked);
-    textSize(25);
-    text(`${clicked}\n$${tempPrice.price}`, width/2, height/5);
+    cryptoGraph(clicked);
   }
   else {
     createButtons();
@@ -126,10 +124,11 @@ function createButtons() {
     fill(0);
     noStroke();
     if (key !== 'NOIS') {
-      text(`${value.name}\n$${value.price}`, buttons[index].x, buttons[index].y);
+      let tempPrice = value.price;
+      text(`${value.name}\n$${tempPrice[tempPrice.length - 1]}`, buttons[index].x, buttons[index].y);
     }
     else {
-      if (value.price.length === undefined) {
+      if (tempNoise === 'Loading') {
         text(`${value.name}\nPrice Loading...`, buttons[index].x, buttons[index].y);
       }
       else {
@@ -254,6 +253,86 @@ function noiseGraph() {
   let value = stocks.get('NOIS');
   text(`Alltime High: $${value.high}`, width/2, GRAPH_TOP - PADDING/2);
   text(`Alltime Low: $${value.low}`, width/2, GRAPH_BOTTOM + PADDING/2);
+}
+
+function cryptoGraph(symbol) {
+  // Sets up the square where the graph will be
+  let w;
+  if (width > height) {
+    w = height/2;
+  }
+  else {
+    w = width/2;
+  }
+  fill(255);
+  noStroke();
+  rect(width/2, height/3, w*1.15, w);
+  
+  // Initializes price into a cryptoPrice array
+  let tempPrice = stocks.get(symbol);
+  let cryptoPrice = [];
+  
+  for (let price of tempPrice.price) {
+    let temp = parseFloat(price);
+    cryptoPrice.push(temp);
+  }
+
+  // Built in function returns the max/min of prices array
+  let minP = min(cryptoPrice);
+  let maxP = max(cryptoPrice);
+
+  // Sets up variables needed to create the graph
+  const PADDING = w * 0.1;
+  const GRAPH_LEFT = width/2 - w/2 + PADDING;
+  const GRAPH_RIGHT = width/2 + w/2 - PADDING;
+  const GRAPH_TOP = height/3 - w/2 + PADDING;
+  const GRAPH_BOTTOM = height/3 + w/2 - PADDING;
+  const TEXT_SIZE_FACTOR = 0.04;
+  const LINE_DASH_SPACE = 10;
+  const PRICE_PADDING = 5;
+  const MIN_Y = GRAPH_BOTTOM - PADDING/2;
+  const MAX_Y = GRAPH_TOP + PADDING/2;
+  
+  // Creates labels for min/max on y axis
+  textSize(w*TEXT_SIZE_FACTOR);
+  textAlign(RIGHT, CENTER);
+  noStroke();
+  fill(0);
+  drawingContext.setLineDash([LINE_DASH_SPACE, LINE_DASH_SPACE]);
+  stroke('green');
+  line(GRAPH_LEFT, MAX_Y, GRAPH_RIGHT, MAX_Y);
+  noStroke();
+  text(`$${maxP}`, GRAPH_LEFT - PRICE_PADDING, MAX_Y);
+  
+  stroke('red');
+  line(GRAPH_LEFT, MIN_Y, GRAPH_RIGHT, MIN_Y);
+  noStroke();
+  text(`$${minP}`, GRAPH_LEFT - PRICE_PADDING, MIN_Y);
+  textAlign(CENTER, CENTER);
+  stroke(0);
+  drawingContext.setLineDash([]);
+  
+  // Sets up x and y axis for graph
+  stroke(0);
+  line(GRAPH_LEFT, GRAPH_BOTTOM, GRAPH_RIGHT, GRAPH_BOTTOM); // x axis
+  line(GRAPH_LEFT, GRAPH_TOP, GRAPH_LEFT, GRAPH_BOTTOM); // y axis
+
+
+  // Creates a single shape consiting all 200 points with lines connecting them
+  fill(255);
+  beginShape();
+  for (let i = 0; i < cryptoPrice.length; i++) {
+    let x = map(i, 0, cryptoPrice.length - 1, GRAPH_LEFT, GRAPH_RIGHT);
+    let y = map(cryptoPrice[i], minP, maxP, GRAPH_BOTTOM - PADDING/2, GRAPH_TOP + PADDING/2);
+    vertex(x, y);
+  }
+  endShape();
+
+  // Creates current price on right side of graph
+  fill(0);
+  noStroke();
+  let currentPriceY = map(cryptoPrice[cryptoPrice.length - 1], minP, maxP, GRAPH_BOTTOM - PADDING/2, GRAPH_TOP + PADDING/2);
+  text(`$${cryptoPrice[cryptoPrice.length - 1]}`, GRAPH_RIGHT + PADDING - PRICE_PADDING, currentPriceY);
 }
 
 function buy() {
