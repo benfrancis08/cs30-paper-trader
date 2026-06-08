@@ -16,6 +16,8 @@ let buying = false;
 let selling = false;
 let clicked = undefined;
 let noisePrice = [];
+let amountClicked = true;
+let priceClicked = false;
 
 let BUTTON_WIDTH;
 let BUTTON_HEIGHT;
@@ -337,8 +339,8 @@ function cryptoGraph(symbol) {
 
 function buy() {
   let w;
-  let amount = true;
-  let price = false;
+  let purchacePrice;
+  let currentStock = stocks.get(clicked);
 
   if (width > height) {
     w = height/1.6;
@@ -357,10 +359,21 @@ function buy() {
   fill('green');
   noStroke();
   textSize(w*TEXT_SIZE_FACTOR);
-  text('Buy', width/2, height/2 - w/4 + PADDING);
+  text('Buy', width/2, height/2 - w/4 + PADDING * 2);
 
   for (let button of priceAmountButtons) {
-    if (amount && button.l === 'Amount') {
+    if (mouseIsPressed) {
+      if (mouseIsInButton(button) && button.l === 'Amount') {
+        amountClicked = true;
+        priceClicked = false;
+      }
+      if (mouseIsInButton(button) && button.l === 'Price') {
+        priceClicked = true;
+        amountClicked = false;
+      } 
+    }
+
+    if (amountClicked && button.l === 'Amount' || priceClicked && button.l === 'Price') {
       fill(100);
     }
     else {
@@ -378,6 +391,10 @@ function buy() {
 
   textBox.show();
 
+  if (amountClicked) {
+    purchacePrice  = textBox.value() * currentStock.price[currentStock.price - 1];
+    text(purchacePrice, width/2, height/1.6 - PADDING*2);
+  }
 }
 
 function sell() {
@@ -407,7 +424,10 @@ function mouseReleased() {
       }
     }
     if (mouseIsInButton(buySellButtons[1])) {
-      sell();
+      buying = !buying;
+      if (!buying) {
+        textBox.hide();
+      }
     }
   }
 }
