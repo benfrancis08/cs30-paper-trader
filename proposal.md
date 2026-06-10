@@ -3,14 +3,14 @@ A paper trader that utilizes a frontend and backend, talking to each other throu
 
 ## Must Haves:
 - A home server using node and express.js accessible globally - through a tailscale funnel - Done 🟢
-- Database - to save data if server gets turned off - Working on 🟡
+- Database - to save data if server gets turned off - Working on 🟢
 - Data fetching - at least one real stock price/information - Done 🟢
 - Sandbox mode - at least one fake stock that is updated on a small interval - Done 🟢
-- Realistic trading logic - can't buy more than you can afford, can't sell more than you have, etc - Working on 🟡
-- p5.js frontend - interactive visual that communicates with backend through tailscale funnels - Working on 🟡
+- Realistic trading logic - can't buy more than you can afford, can't sell more than you have, etc - Working on 🟢
+- p5.js frontend - interactive visual that communicates with backend through tailscale funnels - Working on 🟢
 
 ## Nice to Haves:
-- Visual charts/graphs of past stock data
-- Past transaction history
+- Visual charts/graphs of past stock data 🟢
+- Past transaction history 🟢
 - Live updating stocks (on a preset interval) - Done 🟢
-- Users
+- Users 🔴
