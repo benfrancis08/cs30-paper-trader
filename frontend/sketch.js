@@ -26,7 +26,6 @@ let tradeMessage = '';
 let userBalance = 0;
 let userHoldings = [];
 let transactionHistory = [];
-let scrollY = 0;
 
 let BUTTON_WIDTH;
 let BUTTON_HEIGHT;
