@@ -26,6 +26,7 @@ let tradeMessage = '';
 let userBalance = 0;
 let userHoldings = [];
 let transactionHistory = [];
+let loaded = false;
 
 let BUTTON_WIDTH;
 let BUTTON_HEIGHT;
@@ -40,6 +41,8 @@ async function setup() {
   await getStocks();
   await getUserData();
   
+  loaded = true;
+
   BUTTON_WIDTH = width/6;
   BUTTON_HEIGHT = height/10;
   
@@ -71,31 +74,38 @@ async function setup() {
 
 // Main draw loop calls all functions needed to create project
 function draw() {
-  background(220);
-  if (millis() > currentTime + 5000) {
-    currentTime = millis();
-    getStocks();
+  if (!loaded) {
+    background(220);
+    textAlign(CENTER, CENTER);
+    text('Loading from server', width/2, height/2);
   }
-
-  if (displayingUser) {
-    displayUser();
-  }
-  else if (clicked === 'NOIS') {
+  else {
+    background(220);
+    if (millis() > currentTime + 5000) {
+      currentTime = millis();
+      getStocks();
+    }
+  
+    if (displayingUser) {
+      displayUser();
+    }
+    else if (clicked === 'NOIS') {
+      createButtons();
+      noiseGraph();
+    }
+    else if (clicked !== undefined) {
+      createButtons();
+      cryptoGraph(clicked);
+    }
+    if (buying) {
+      buy();
+    }
+    if (selling) {
+      sell();
+    }
+  
     createButtons();
-    noiseGraph();
   }
-  else if (clicked !== undefined) {
-    createButtons();
-    cryptoGraph(clicked);
-  }
-  if (buying) {
-    buy();
-  }
-  if (selling) {
-    sell();
-  }
-
-  createButtons();
 }
 
 // Pulls stock data from backend 
