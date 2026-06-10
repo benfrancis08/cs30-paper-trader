@@ -217,6 +217,9 @@ function createButtons() {
       }
     }
   }
+  else {
+    return;
+  }
 }
 
 // Sets up noise graph for noise stock not crypto stocks
