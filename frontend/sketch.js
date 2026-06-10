@@ -8,7 +8,7 @@
 // Variables used in project
 let currentTime;
 let price;
-let buttons;
+let buttons = undefined;
 let buySellButtons;
 let priceAmountButtons;
 let tempNoise;
@@ -144,75 +144,77 @@ async function getUserData() {
 
 // Creates all buttons and displays them on canvas
 function createButtons() {
-  textSize(buttons[0].w/8);
-  let index = 0;
-  for (let [key, value] of stocks) {
-    if (mouseIsInButton(buttons[index])) {
+  if (buttons !== undefined) {
+    textSize(buttons[0].w/8);
+    let index = 0;
+    for (let [key, value] of stocks) {
+      if (mouseIsInButton(buttons[index])) {
+        fill(100);
+      }
+      else {
+        fill(255);
+      }
+      
+      let currentPrice = 'Price loading...';
+      if (value.price && Array.isArray(value.price) && value.price.length > 0) {
+        currentPrice = value.price[value.price.length - 1];
+        currentPrice = currentPrice.toFixed(2);
+      }
+
+      stroke(0);
+      rect(buttons[index].x, buttons[index].y, buttons[index].w, buttons[index].h);
+
+      fill(0);
+      noStroke();
+      if (key !== 'NOIS') {
+        text(`${value.name}\n$${currentPrice}`, buttons[index].x, buttons[index].y);
+      }
+      else {
+        if (tempNoise === 'Loading') {
+          text(`${value.name}\nPrice Loading...`, buttons[index].x, buttons[index].y);
+        }
+        else {
+          text(`${value.name}\n$${currentPrice}`, buttons[index].x, buttons[index].y);
+        }
+      }
+
+      buttons[index].i = key;
+      index ++;
+    }
+
+    let button = buttons[buttons.length - 1];
+    if (mouseIsInButton(button)) {
       fill(100);
     }
     else {
       fill(255);
     }
-    
-    let currentPrice = 'Price loading...';
-    if (value.price && Array.isArray(value.price) && value.price.length > 0) {
-      currentPrice = value.price[value.price.length - 1];
-      currentPrice = currentPrice.toFixed(2);
-    }
-
     stroke(0);
-    rect(buttons[index].x, buttons[index].y, buttons[index].w, buttons[index].h);
-
-    fill(0);
+    rect(button.x, button.y, button.w, button.h);
     noStroke();
-    if (key !== 'NOIS') {
-      text(`${value.name}\n$${currentPrice}`, buttons[index].x, buttons[index].y);
-    }
-    else {
-      if (tempNoise === 'Loading') {
-        text(`${value.name}\nPrice Loading...`, buttons[index].x, buttons[index].y);
+    fill(0);
+    text(`You\n${userBalance.toFixed(2)}`, button.x, button.y);
+
+
+    if (clicked !== undefined && !displayingUser) {
+      const RESIZING_FACTOR = 25;
+      for (let button of buySellButtons) {
+
+        if (mouseIsInButton(button)) {
+          button.w = BUTTON_WIDTH + RESIZING_FACTOR;
+          button.h = BUTTON_HEIGHT + RESIZING_FACTOR;
+        }
+        else {
+          button.w = BUTTON_WIDTH;
+          button.h = BUTTON_HEIGHT;
+        }
+
+        fill(button.c);
+        rect(button.x, button.y, button.w, button.h);
+        fill(0);
+        textSize(button.w/4);
+        text(button.l, button.x, button.y);
       }
-      else {
-        text(`${value.name}\n$${currentPrice}`, buttons[index].x, buttons[index].y);
-      }
-    }
-
-    buttons[index].i = key;
-    index ++;
-  }
-
-  let button = buttons[buttons.length - 1];
-  if (mouseIsInButton(button)) {
-    fill(100);
-  }
-  else {
-    fill(255);
-  }
-  stroke(0);
-  rect(button.x, button.y, button.w, button.h);
-  noStroke();
-  fill(0);
-  text(`You\n${userBalance.toFixed(2)}`, button.x, button.y);
-
-
-  if (clicked !== undefined && !displayingUser) {
-    const RESIZING_FACTOR = 25;
-    for (let button of buySellButtons) {
-
-      if (mouseIsInButton(button)) {
-        button.w = BUTTON_WIDTH + RESIZING_FACTOR;
-        button.h = BUTTON_HEIGHT + RESIZING_FACTOR;
-      }
-      else {
-        button.w = BUTTON_WIDTH;
-        button.h = BUTTON_HEIGHT;
-      }
-
-      fill(button.c);
-      rect(button.x, button.y, button.w, button.h);
-      fill(0);
-      textSize(button.w/4);
-      text(button.l, button.x, button.y);
     }
   }
 }
