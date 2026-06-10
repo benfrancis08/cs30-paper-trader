@@ -632,13 +632,13 @@ function displayUser() {
 
   // Displays current balance
   fill(0);
-  textSize(w*0.05);
+  textSize(w*0.04);
   text(`Current Balance: $${userBalance.toFixed(2)}`, width/2, BUTTON_HEIGHT*1.5);
   
   // Sets up main current holdings and transaction history headings
   fill(0);
   noStroke();
-  textSize(w*0.04);
+  textSize(w*0.03);
   text('Current Holdings', width/2 - w/4, BUTTON_HEIGHT*2);
   text('Transaction History', width/2 + w/4, BUTTON_HEIGHT*2);
   
