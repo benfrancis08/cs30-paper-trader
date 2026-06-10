@@ -154,21 +154,26 @@ function createButtons() {
       fill(255);
     }
     
+    let currentPrice = 'Price loading...';
+    if (value.price && Array.isArray(value.price) && value.price.length > 0) {
+      currentPrice = value.price[value.price.length - 1];
+      currentPrice = currentPrice.toFixed(2);
+    }
+
     stroke(0);
     rect(buttons[index].x, buttons[index].y, buttons[index].w, buttons[index].h);
 
     fill(0);
     noStroke();
     if (key !== 'NOIS') {
-      let tempPrice = value.price;
-      text(`${value.name}\n$${tempPrice[tempPrice.length - 1]}`, buttons[index].x, buttons[index].y);
+      text(`${value.name}\n$${currentPrice}`, buttons[index].x, buttons[index].y);
     }
     else {
       if (tempNoise === 'Loading') {
         text(`${value.name}\nPrice Loading...`, buttons[index].x, buttons[index].y);
       }
       else {
-        text(`${value.name}\n$${value.price[value.price.length - 1].toFixed(2)}`, buttons[index].x, buttons[index].y);
+        text(`${value.name}\n$${currentPrice}`, buttons[index].x, buttons[index].y);
       }
     }
 
