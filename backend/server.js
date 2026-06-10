@@ -14,11 +14,11 @@ const app = express();
 
 // Setting up crypto map
 let stocks = new Map();
-stocks.set('COINBASE:BTC-USD', {name: 'Bitcoin', symbol: 'BTC'});
-stocks.set('COINBASE:ETH-USD', {name: 'Ethereum', symbol: 'ETH'});
-stocks.set('COINBASE:XRP-USD', {name: 'XRP', symbol: 'XRP'});
-stocks.set('COINBASE:SOL-USD', {name: 'Solana', symbol: 'SOL'});
-stocks.set('COINBASE:DOGE-USD', {name: 'Dogecoin', symbol: 'DOGE'});
+stocks.set('BTC-USD', {name: 'Bitcoin', symbol: 'BTC'});
+stocks.set('ETH-USD', {name: 'Ethereum', symbol: 'ETH'});
+stocks.set('XRP-USD', {name: 'XRP', symbol: 'XRP'});
+stocks.set('SOL-USD', {name: 'Solana', symbol: 'SOL'});
+stocks.set('DOGE-USD', {name: 'Dogecoin', symbol: 'DOGE'});
 stocks.set('NOIS', {name: 'Noise', symbol: 'NOIS'})
 
 // Allows communictation between frontend and backend without errors
@@ -30,10 +30,10 @@ app.use(cors({
 async function updatePrices() {
     for (let [key, value] of stocks) {
         if (key !== 'NOIS') {
-            let response = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${key}&token=${process.env.FINNHUB_KEY}`);
+            let response = await axios.get(`https://api.coinbase.com/v2/prices/${key}/spot`);
             
-            if (response.data.c !== 0) {
-                await db.appendCryptoPrice(value.symbol, response.data.c);
+            if (response.data.data.amount !== 0) {
+                await db.appendCryptoPrice(value.symbol, response.data.data.amount);
             }
             
             value.price = db.getCryptoPrices(value.symbol);
