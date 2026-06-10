@@ -22,9 +22,8 @@ stocks.set('COINBASE:DOGE-USD', {name: 'Dogecoin', symbol: 'DOGE'});
 stocks.set('NOIS', {name: 'Noise', symbol: 'NOIS'})
 
 // Allows communictation between frontend and backend without errors
-// http://127.0.0.1:5500 only used for local testing REMOVE BEFORE HANDING IN
 app.use(cors({
-    origin: ['https://benfrancis08.github.io', 'http://127.0.0.1:5500']
+    origin: ['https://benfrancis08.github.io']
 }));
 
 // API Stock Calling - Uses Finnhub (60 api calls per min)
@@ -178,5 +177,5 @@ app.get('/transactions', (req, res) => {
 app.listen(process.env.PORT, async () => {
     await autoUpdatePrice();
     noiseStock();
-    console.log(`Started\nRunning on http://localhost:${process.env.PORT}`);
+    console.log(`Started\nRunning on https://pine64.tailb67b61.ts.net`);
 })

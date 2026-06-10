@@ -31,6 +31,8 @@ let scrollY = 0;
 let BUTTON_WIDTH;
 let BUTTON_HEIGHT;
 
+const SERVER_URL = 'https://pine64.tailb67b61.ts.net';
+
 let stocks = new Map();
 
 async function setup() {
@@ -100,8 +102,7 @@ function draw() {
 // Pulls stock data from backend 
 async function getStocks() {
   try {
-    // Fetch from localhost for testing only. SWITCH TO "https://pine64.tailb67b61.ts.net" BEFORE HANDING IN/TESTING ON SERVER
-    let stockPrices = await fetch('http://localhost:3000/prices');
+    let stockPrices = await fetch(`${SERVER_URL}/prices`);
     price = await stockPrices.json();
 
     for (let [symbol, value] of Object.entries(price)) {
@@ -127,15 +128,14 @@ async function getStocks() {
 // Pulls user data from backend
 async function getUserData() {
   try {
-    // Fetch from localhost for testing only. SWITCH TO "https://pine64.tailb67b61.ts.net" BEFORE HANDING IN/TESTING ON SERVER
-    let userResponse = await fetch('http://localhost:3000/user');
+    let userResponse = await fetch(`${SERVER_URL}/user`);
     let userData = await userResponse.json();
     userBalance = userData.cash_balance;
 
-    let holdingsResponse = await fetch('http://localhost:3000/holdings');
+    let holdingsResponse = await fetch(`${SERVER_URL}/holdings`);
     userHoldings = await holdingsResponse.json();
 
-    let transactionResponse = await fetch('http://localhost:3000/transactions');
+    let transactionResponse = await fetch(`${SERVER_URL}/transactions`);
     transactionHistory = await transactionResponse.json();
   } 
   catch (error) {
@@ -484,8 +484,7 @@ async function buy() {
   if (transaction === 'Buy') {
     transaction = undefined;
     try {
-      // Fetch from localhost for testing only. SWITCH TO "https://pine64.tailb67b61.ts.net" BEFORE HANDING IN/TESTING ON SERVER
-      let response = await fetch(`http://localhost:3000/buy/${clicked}/${purchaceAmount}`);
+      let response = await fetch(`${SERVER_URL}/buy/${clicked}/${purchaceAmount}`);
       response = await response.json();
       tradeMessage = response.message;
     }
@@ -592,8 +591,7 @@ async function sell() {
   if (transaction === 'Sell') {
     transaction = undefined;
     try {
-      // Fetch from localhost for testing only. SWITCH TO "https://pine64.tailb67b61.ts.net" BEFORE HANDING IN/TESTING ON SERVER
-      let response = await fetch(`http://localhost:3000/sell/${clicked}/${sellAmount}`);
+      let response = await fetch(`${SERVER_URL}/sell/${clicked}/${sellAmount}`);
       response = await response.json();
       tradeMessage = response.message;
     }
