@@ -12,3 +12,8 @@ What to improve:
 - Add more stocks to invest in to fill up the left side of the page
 
 ## Non-Experienced:
+What they liked:
+- easy to use, like the graphs
+What to improve:
+- once click enter to buy or sell shares the pop up window does not go away until you hit the buy or sell buttons
+- it would be beneficial to show what your purchase price is compared to current value in the summary of transactions and share amount table
