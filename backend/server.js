@@ -30,12 +30,16 @@ app.use(cors({
 // API Stock Calling - Uses Finnhub (60 api calls per min)
 async function updatePrices() {
     for (let [key, value] of stocks) {
-        let response = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${key}&token=${process.env.FINNHUB_KEY}`);
-        
-        await db.appendCryptoPrice(value.symbol, response.data.c);
-        
-        value.price = db.getCryptoPrices(value.symbol);
-        stocks.set(key, value);
+        if (key !== 'NOIS') {
+            let response = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${key}&token=${process.env.FINNHUB_KEY}`);
+            
+            if (response.data.c !== 0) {
+                await db.appendCryptoPrice(value.symbol, response.data.c);
+            }
+            
+            value.price = db.getCryptoPrices(value.symbol);
+            stocks.set(key, value);
+        }
     }
 }
 
@@ -107,15 +111,15 @@ app.get('/prices', (req, res) => {
 // '/buy' endpoint to buy stocks
 app.get('/buy/:symbol/:amount', (req, res) => {
     let symbol = req.params.symbol.toUpperCase();
-    let amount = req.params.amount;
+    let amount = parseFloat(req.params.amount);
     let currentPrice;
 
-    let tempNoise = stocks.get(symbol);
-    currentPrice =tempNoise.price[tempNoise.price.length - 1];
+    let tempStock = stocks.get(symbol);
+    currentPrice =tempStock.price[tempStock.price.length - 1];
 
     try {
         db.executeTrade(symbol, 'buy', amount, currentPrice);
-        res.json({success: true, message: `Successfully bought ${amount} shares of ${symbol}`});
+        res.json({success: true, message: `Successfully bought ${amount.toFixed(4)} shares of ${tempStock.symbol}`});
     } 
     catch (error) {
         res.status(400).json({success: false, message: error.message});
@@ -125,18 +129,48 @@ app.get('/buy/:symbol/:amount', (req, res) => {
 // '/sell' endpoint to sell stocks
 app.get('/sell/:symbol/:amount', (req, res) => {
     let symbol = req.params.symbol.toUpperCase();
-    let amount = req.params.amount;
+    let amount = parseFloat(req.params.amount);
     let currentPrice;
 
-    let tempNoise = stocks.get(symbol);
-    currentPrice =tempNoise.price[tempNoise.price.length - 1];
+    let tempStock = stocks.get(symbol);
+    currentPrice =tempStock.price[tempStock.price.length - 1];
 
     try {
         db.executeTrade(symbol, 'sell', amount, currentPrice);
-        res.json({success: true, message: `Successfully bought ${amount} shares of ${symbol}`});
+        res.json({success: true, message: `Successfully sold ${amount.toFixed(4)} shares of ${tempStock.symbol}`});
     } 
     catch (error) {
         res.status(400).json({success: false, message: error.message});
+    }
+})
+
+app.get('/user', (req, res) => {
+    try {
+        let user = db.getUser();
+        res.json(user)
+    } 
+    catch (error) {
+        res.status(500).json({success: false, message: error.message});
+    }
+})
+
+app.get('/holdings', (req, res) => {
+    try {
+        let holdings = db.getHoldings();
+        res.json(holdings)
+    } 
+    catch (error) {
+        res.status(500).json({success: false, message: error.message});
+    }
+})
+
+app.get('/transactions', (req, res) => {
+    try {
+        let transactions = db.getTransactions();
+        res.json(transactions)
+    } 
+    catch (error) {
+        res.status(500).json({success: false, message: error.message});
     }
 })
 

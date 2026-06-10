@@ -5,6 +5,7 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 
+// Variables used in project
 let currentTime;
 let price;
 let buttons;
@@ -18,6 +19,14 @@ let clicked = undefined;
 let noisePrice = [];
 let amountClicked = true;
 let priceClicked = false;
+let transactionPossible = false;
+let transaction = undefined;
+let displayingUser = false;
+let tradeMessage = '';
+let userBalance = 0;
+let userHoldings = [];
+let transactionHistory = [];
+let scrollY = 0;
 
 let BUTTON_WIDTH;
 let BUTTON_HEIGHT;
@@ -28,6 +37,7 @@ async function setup() {
   createCanvas(windowWidth, windowHeight);
   currentTime = millis();
   await getStocks();
+  await getUserData();
   
   BUTTON_WIDTH = width/6;
   BUTTON_HEIGHT = height/10;
@@ -38,7 +48,8 @@ async function setup() {
     {x: BUTTON_WIDTH/2, y: BUTTON_HEIGHT*2.5, w: BUTTON_WIDTH, h: BUTTON_HEIGHT},
     {x: BUTTON_WIDTH/2, y: BUTTON_HEIGHT*3.5, w: BUTTON_WIDTH, h: BUTTON_HEIGHT},
     {x: BUTTON_WIDTH/2, y: BUTTON_HEIGHT*4.5, w: BUTTON_WIDTH, h: BUTTON_HEIGHT},
-    {x: BUTTON_WIDTH/2, y: BUTTON_HEIGHT*5.5, w: BUTTON_WIDTH, h: BUTTON_HEIGHT}
+    {x: BUTTON_WIDTH/2, y: BUTTON_HEIGHT*5.5, w: BUTTON_WIDTH, h: BUTTON_HEIGHT},
+    {x: BUTTON_WIDTH/2, y: height - BUTTON_HEIGHT/2, w: BUTTON_WIDTH, h: BUTTON_HEIGHT, i: 'User'}
   ];
   buySellButtons = [
     {x: width*1/3, y: height*5/6, w: BUTTON_WIDTH, h: BUTTON_HEIGHT, c: 'green', l: 'Buy'},
@@ -57,6 +68,7 @@ async function setup() {
   rectMode(CENTER);
 }
 
+// Main draw loop calls all functions needed to create project
 function draw() {
   background(220);
   if (millis() > currentTime + 5000) {
@@ -64,7 +76,10 @@ function draw() {
     getStocks();
   }
 
-  if (clicked === 'NOIS') {
+  if (displayingUser) {
+    displayUser();
+  }
+  else if (clicked === 'NOIS') {
     createButtons();
     noiseGraph();
   }
@@ -72,17 +87,17 @@ function draw() {
     createButtons();
     cryptoGraph(clicked);
   }
-  else {
-    createButtons();
-  }
   if (buying) {
     buy();
   }
   if (selling) {
     sell();
   }
+
+  createButtons();
 }
 
+// Pulls stock data from backend 
 async function getStocks() {
   try {
     // Fetch from localhost for testing only. SWITCH TO "https://pine64.tailb67b61.ts.net" BEFORE HANDING IN/TESTING ON SERVER
@@ -109,6 +124,26 @@ async function getStocks() {
   }
 } 
 
+// Pulls user data from backend
+async function getUserData() {
+  try {
+    // Fetch from localhost for testing only. SWITCH TO "https://pine64.tailb67b61.ts.net" BEFORE HANDING IN/TESTING ON SERVER
+    let userResponse = await fetch('http://localhost:3000/user');
+    let userData = await userResponse.json();
+    userBalance = userData.cash_balance;
+
+    let holdingsResponse = await fetch('http://localhost:3000/holdings');
+    userHoldings = await holdingsResponse.json();
+
+    let transactionResponse = await fetch('http://localhost:3000/transactions');
+    transactionHistory = await transactionResponse.json();
+  } 
+  catch (error) {
+    console.log("something went wrong " + error);
+  }
+}
+
+// Creates all buttons and displays them on canvas
 function createButtons() {
   textSize(buttons[0].w/8);
   let index = 0;
@@ -142,7 +177,21 @@ function createButtons() {
     index ++;
   }
 
-  if (clicked !== undefined) {
+  let button = buttons[buttons.length - 1];
+  if (mouseIsInButton(button)) {
+    fill(100);
+  }
+  else {
+    fill(255);
+  }
+  stroke(0);
+  rect(button.x, button.y, button.w, button.h);
+  noStroke();
+  fill(0);
+  text(`You\n${userBalance.toFixed(2)}`, button.x, button.y);
+
+
+  if (clicked !== undefined && !displayingUser) {
     const RESIZING_FACTOR = 25;
     for (let button of buySellButtons) {
 
@@ -164,6 +213,7 @@ function createButtons() {
   }
 }
 
+// Sets up noise graph for noise stock not crypto stocks
 function noiseGraph() {
   // Sets up the square where the graph will be
   let w;
@@ -257,6 +307,7 @@ function noiseGraph() {
   text(`Alltime Low: $${value.low}`, width/2, GRAPH_BOTTOM + PADDING/2);
 }
 
+// Sets up graph for all crypto stocks not noise
 function cryptoGraph(symbol) {
   // Sets up the square where the graph will be
   let w;
@@ -337,9 +388,11 @@ function cryptoGraph(symbol) {
   text(`$${cryptoPrice[cryptoPrice.length - 1]}`, GRAPH_RIGHT + PADDING - PRICE_PADDING, currentPriceY);
 }
 
-function buy() {
+// buy function handles buy popup and buy logic/sending to backend
+async function buy() {
   let w;
   let purchacePrice;
+  let purchaceAmount;
   let currentStock = stocks.get(clicked);
 
   if (width > height) {
@@ -391,14 +444,258 @@ function buy() {
 
   textBox.show();
 
-  if (amountClicked) {
-    purchacePrice  = textBox.value() * currentStock.price[currentStock.price - 1];
-    text(purchacePrice, width/2, height/1.6 - PADDING*2);
+  if (amountClicked && textBox.value() !== '') {
+    purchaceAmount = parseFloat(textBox.value());
+    purchacePrice = purchaceAmount * currentStock.price[currentStock.price.length - 1];
+    text(`$${purchacePrice.toFixed(2)}`, width/2, height/2 + PADDING*2);
   }
+
+  if (priceClicked && textBox.value() !== '') {
+    purchacePrice = parseFloat(textBox.value());
+    purchaceAmount = purchacePrice/currentStock.price[currentStock.price.length - 1];
+    text(`${purchaceAmount.toFixed(4)} Shares`, width/2, height/2 + PADDING*2);
+  }
+
+  if (purchaceAmount >= 0.0001) {
+    transactionPossible = true;
+    text('Press ENTER to place order', width/2, height/1.6 - PADDING*2);
+  }
+  else {
+    transactionPossible = false;
+    text('Enter a valid price or amount', width/2, height/1.6 - PADDING*2);
+  }
+
+  if (tradeMessage !== '') {
+    textBox.hide();
+    fill(255);
+    stroke(0);
+    rect(width/2, height/2, w, w/2);
+    
+    fill('green');
+    noStroke();
+    textSize(w*TEXT_SIZE_FACTOR);
+    text('Buy', width/2, height/2 - w/4 + PADDING * 2);
+
+    fill(0);
+    textSize(w*TEXT_SIZE_FACTOR);
+    text(tradeMessage, width/2, height/2);
+  }
+
+  if (transaction === 'Buy') {
+    transaction = undefined;
+    try {
+      // Fetch from localhost for testing only. SWITCH TO "https://pine64.tailb67b61.ts.net" BEFORE HANDING IN/TESTING ON SERVER
+      let response = await fetch(`http://localhost:3000/buy/${clicked}/${purchaceAmount}`);
+      response = await response.json();
+      tradeMessage = response.message;
+    }
+    catch(error) {
+      console.log("something went wrong " + error);
+    }
+  }
+  await getUserData();
 }
 
-function sell() {
+// sell function handles sell popup and sell logic/sending to backend
+async function sell() {
+  let w;
+  let sellPrice;
+  let sellAmount;
+  let currentStock = stocks.get(clicked);
 
+  if (width > height) {
+    w = height/1.6;
+  }
+  else {
+    w = width/1.6;
+  }
+  
+  const PADDING = 15;
+  const TEXT_SIZE_FACTOR = 0.05;
+  
+  fill(255);
+  stroke(0);
+  rect(width/2, height/2, w, w/2);
+  
+  fill('red');
+  noStroke();
+  textSize(w*TEXT_SIZE_FACTOR);
+  text('Sell', width/2, height/2 - w/4 + PADDING * 2);
+
+  for (let button of priceAmountButtons) {
+    if (mouseIsPressed) {
+      if (mouseIsInButton(button) && button.l === 'Amount') {
+        amountClicked = true;
+        priceClicked = false;
+      }
+      if (mouseIsInButton(button) && button.l === 'Price') {
+        priceClicked = true;
+        amountClicked = false;
+      } 
+    }
+
+    if (amountClicked && button.l === 'Amount' || priceClicked && button.l === 'Price') {
+      fill(100);
+    }
+    else {
+      fill(255);
+    }
+
+    stroke(0);
+    rect(button.x, button.y, button.w, button.h);
+
+    noStroke();
+    fill(0);
+    textSize(button.w/6);
+    text(button.l, button.x, button.y);
+  }
+
+  textBox.show();
+
+  if (amountClicked && textBox.value() !== '') {
+    sellAmount = parseFloat(textBox.value());
+    sellPrice = sellAmount * currentStock.price[currentStock.price.length - 1];
+    text(`$${sellPrice.toFixed(2)}`, width/2, height/2 + PADDING*2);
+  }
+
+  if (priceClicked && textBox.value() !== '') {
+    sellPrice = parseFloat(textBox.value());
+    sellAmount = sellPrice/currentStock.price[currentStock.price.length - 1];
+    text(`${sellAmount.toFixed(4)} Shares`, width/2, height/2 + PADDING*2);
+  }
+
+  if (sellAmount >= 0.0001) {
+    transactionPossible = true;
+    text('Press ENTER to place order', width/2, height/1.6 - PADDING*2);
+  }
+  else {
+    transactionPossible = false;
+    text('Enter a valid price or amount', width/2, height/1.6 - PADDING*2);
+  }
+
+  if (tradeMessage !== '') {
+    textBox.hide();
+    fill(255);
+    stroke(0);
+    rect(width/2, height/2, w, w/2);
+    
+    fill('red');
+    noStroke();
+    textSize(w*TEXT_SIZE_FACTOR);
+    text('Sell', width/2, height/2 - w/4 + PADDING * 2);
+
+    fill(0);
+    textSize(w*TEXT_SIZE_FACTOR);
+    text(tradeMessage, width/2, height/2);
+  }
+
+  if (transaction === 'Sell') {
+    transaction = undefined;
+    try {
+      // Fetch from localhost for testing only. SWITCH TO "https://pine64.tailb67b61.ts.net" BEFORE HANDING IN/TESTING ON SERVER
+      let response = await fetch(`http://localhost:3000/sell/${clicked}/${sellAmount}`);
+      response = await response.json();
+      tradeMessage = response.message;
+    }
+    catch(error) {
+      console.log("something went wrong " + error);
+    }
+  }
+  await getUserData();
+}
+
+// displayUser function displays all user data in a popup
+function displayUser() {
+  let w = width - BUTTON_WIDTH*2.5;
+  let h = height - BUTTON_HEIGHT*2.5;
+
+  // Creates white bg for user info
+  fill(255);
+  rect(width/2, height/2, w, h);
+
+  // Displays current balance
+  fill(0);
+  textSize(w*0.05);
+  text(`Current Balance: $${userBalance.toFixed(2)}`, width/2, BUTTON_HEIGHT*1.5);
+  
+  // Sets up main current holdings and transaction history headings
+  fill(0);
+  noStroke();
+  textSize(w*0.04);
+  text('Current Holdings', width/2 - w/4, BUTTON_HEIGHT*2);
+  text('Transaction History', width/2 + w/4, BUTTON_HEIGHT*2);
+  
+  // Variables used for current holdings and transaction history boxes
+  let boxW = w/2;
+  let boxH = h/1.3;
+  let leftBoxX = width/2 - w/4;
+  let rightBoxX = width/2 + w/4;
+  let boxY = height/2;
+  
+  // Sets up current holdings and transaction history boxes
+  fill(220);
+  stroke(0);
+  rect(leftBoxX, boxY, boxW, boxH);
+  rect(rightBoxX, boxY, boxW, boxH);
+  
+  // Sets up headings for current holdings box
+  fill(0);
+  noStroke();
+  textAlign(CENTER, CENTER);
+  text('Symbol', leftBoxX - boxW/4, boxY - boxH/2 + 15);
+  text('Amount', leftBoxX + boxW/4, boxY - boxH/2 + 15);
+  
+  // Sets up headings for transaction history box
+  text('Symbol', rightBoxX - boxW/3, boxY - boxH/2 + 15);
+  text('Type', rightBoxX, boxY - boxH/2 + 15);
+  text('Amount', rightBoxX + boxW/3, boxY - boxH/2 + 15);
+  
+  // Creates line under box subheadings
+  stroke(0);
+  line(leftBoxX - boxW/2, boxY - boxH/2 + 30, leftBoxX + boxW/2, boxY - boxH/2 + 30);
+  line(rightBoxX - boxW/2, boxY - boxH/2 + 30, rightBoxX + boxW/2, boxY - boxH/2 + 30);
+  
+  // Variables used for displaying current holdings and transaction history
+  let rowSpacing = h * 0.05;
+  let startY = boxY - boxH/2 + 50; 
+  let bottomLimit = boxY + boxH/2 - 15;
+
+  // Displays all current holdings that fit in given box dimensions
+  noStroke();
+  let currentY = startY;
+  for (let holding of userHoldings) {
+    if (currentY < bottomLimit) {
+      let stock = stocks.get(holding.symbol);
+      fill(0);
+      text(stock.symbol, leftBoxX - boxW/4, currentY);
+      text(holding.quantity.toFixed(4), leftBoxX + boxW/4, currentY);
+      currentY += rowSpacing;
+    }
+  }
+
+  // Displays all transactions that fit in given box dimensions
+  currentY = startY;
+  for (let transaction of transactionHistory) {
+    if (currentY < bottomLimit) {
+      let stock = stocks.get(transaction.symbol);
+
+      fill(0);
+      text(stock.symbol, rightBoxX - boxW/3, currentY);
+
+      if (transaction.type === 'buy') {
+        fill('green'); 
+      } 
+      else {
+        fill('red'); 
+      }
+      text(transaction.type.toUpperCase(), rightBoxX, currentY);
+
+      fill(0);
+      text(transaction.quantity.toFixed(4), rightBoxX + boxW/3, currentY);
+      
+      currentY += rowSpacing;
+    }
+  }
 }
 
 // Returns a boolean based on if the mouse is in the given button or not
@@ -409,25 +706,54 @@ function mouseIsInButton(btn) {
          mouseY < btn.y + btn.h/2;
 }
 
+// Built in function detects if mouseButton is pressed then released
 function mouseReleased() {
   for (let button of buttons) {
     if (mouseIsInButton(button)) {
       clicked = button.i;
+      if (clicked !== 'User') {
+        displayingUser = false;
+      }
     }
   }
-
-  if (clicked !== undefined) {
+  if (clicked === 'User') {
+    clicked = undefined;
+    buying = false;
+    selling = false;
+    tradeMessage = '';
+    textBox.hide();
+    displayingUser = !displayingUser;
+  }
+  else if (clicked !== undefined) {
     if (mouseIsInButton(buySellButtons[0])) {
       buying = !buying;
+      selling = false;
+      textBox.value('');
       if (!buying) {
         textBox.hide();
+        tradeMessage = '';
       }
     }
     if (mouseIsInButton(buySellButtons[1])) {
-      buying = !buying;
-      if (!buying) {
+      selling = !selling;
+      buying = false;
+      textBox.value('');
+      if (!selling) {
         textBox.hide();
+        tradeMessage = '';
       }
+    }
+  }
+}
+
+// Built in function detects if a key on keyboard is pressed
+function keyPressed() {
+  if (keyCode === ENTER && transactionPossible) {
+    if (buying) {
+      transaction = 'Buy';
+    }
+    else {
+      transaction = 'Sell';
     }
   }
 }
