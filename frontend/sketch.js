@@ -7,6 +7,7 @@
 
 // Variables used in project
 let currentTime;
+let buySellTime;
 let price;
 let buttons = undefined;
 let buySellButtons;
@@ -38,6 +39,8 @@ let stocks = new Map();
 async function setup() {
   createCanvas(windowWidth, windowHeight);
   currentTime = millis();
+  buySellTime = millis();
+
   await getStocks();
   await getUserData();
   
@@ -104,6 +107,13 @@ function draw() {
       sell();
     }
   
+    if (tradeMessage !== '' && millis() > buySellTime + 1500) {
+      tradeMessage = '';
+      buying = false;
+      selling = false;
+      textBox.hide();
+    }
+
     createButtons();
   }
 }
@@ -143,6 +153,7 @@ async function getUserData() {
 
     let holdingsResponse = await fetch(`${SERVER_URL}/holdings`);
     userHoldings = await holdingsResponse.json();
+    userHoldings = userHoldings.filter((holding) => holding.quantity > 0.0001);
 
     let transactionResponse = await fetch(`${SERVER_URL}/transactions`);
     transactionHistory = await transactionResponse.json();
@@ -414,6 +425,14 @@ async function buy() {
   let purchaceAmount;
   let currentStock = stocks.get(clicked);
 
+  let currentPrice = currentStock.price[currentStock.price.length - 1];
+  let stockAmount = 0;
+  for (let holding of userHoldings) {
+    if (holding.symbol === clicked) {
+      stockAmount = holding.quantity;
+    }
+  }
+
   if (width > height) {
     w = height/1.6;
   }
@@ -432,6 +451,51 @@ async function buy() {
   noStroke();
   textSize(w*TEXT_SIZE_FACTOR);
   text('Buy', width/2, height/2 - w/4 + PADDING * 2);
+
+  fill(0);
+  noStroke();
+  textSize(w*0.035);
+  text(`Balance:\n$${userBalance.toFixed(2)}`, width/2 - w/3, height/2 - w/8);
+  text(`Current price:\n$${currentPrice.toFixed(2)}`, width/2 + w/3, height/2 - w/8);
+  if (amountClicked) {
+    text(`Amount owned:\n${stockAmount.toFixed(4)}`, width/2 - w/3, height/2 + w/8);
+  }
+  else {
+    text(`Price owned:\n$${(currentPrice*stockAmount).toFixed(2)}`, width/2 - w/3, height/2 + w/8);
+  }
+
+  let maxButton = {
+    x: width/2 + w/3,
+    y: height/2 + w/8,
+    w: BUTTON_WIDTH/1.5,
+    h: BUTTON_HEIGHT/3,
+    l: 'Buy Max'
+  };
+
+  if (mouseIsPressed && mouseIsInButton(maxButton)) {
+    let maxAmount = userBalance/currentPrice;
+    let roundedMaxAmount = Math.floor(maxAmount*10000)/10000;
+    if (amountClicked) {
+      textBox.value(maxAmount.toFixed(4));
+    }
+    else {
+      textBox.value((maxAmount*currentPrice).toFixed(2));
+    }
+  }
+
+  if (mouseIsInButton(maxButton)) {
+    fill('green');
+  }
+  else {
+    fill(0, 255, 0, 100);
+  }
+
+  stroke(0);
+  rect(maxButton.x, maxButton.y, maxButton.w, maxButton.h);
+  fill(0); 
+  noStroke(); 
+  textSize(maxButton.w/6);
+  text(maxButton.l, maxButton.x, maxButton.y);
 
   for (let button of priceAmountButtons) {
     if (mouseIsPressed) {
@@ -506,6 +570,7 @@ async function buy() {
       let response = await fetch(`${SERVER_URL}/buy/${clicked}/${purchaceAmount}`);
       response = await response.json();
       tradeMessage = response.message;
+      buySellTime = millis();
     }
     catch(error) {
       console.log("something went wrong " + error);
@@ -520,6 +585,14 @@ async function sell() {
   let sellPrice;
   let sellAmount;
   let currentStock = stocks.get(clicked);
+
+  let currentPrice = currentStock.price[currentStock.price.length - 1];
+  let stockAmount = 0;
+  for (let holding of userHoldings) {
+    if (holding.symbol === clicked) {
+      stockAmount = holding.quantity;
+    }
+  }
 
   if (width > height) {
     w = height/1.6;
@@ -539,6 +612,50 @@ async function sell() {
   noStroke();
   textSize(w*TEXT_SIZE_FACTOR);
   text('Sell', width/2, height/2 - w/4 + PADDING * 2);
+
+  fill(0);
+  noStroke();
+  textSize(w*0.035);
+  text(`Balance:\n$${userBalance.toFixed(2)}`, width/2 - w/3, height/2 - w/8);
+  text(`Current price:\n$${currentPrice.toFixed(2)}`, width/2 + w/3, height/2 - w/8);
+  if (amountClicked) {
+    text(`Amount owned:\n${stockAmount.toFixed(4)}`, width/2 - w/3, height/2 + w/8);
+  }
+  else {
+    text(`Price owned:\n$${(currentPrice*stockAmount).toFixed(2)}`, width/2 - w/3, height/2 + w/8);
+  }
+
+  let maxButton = {
+    x: width/2 + w/3,
+    y: height/2 + w/8,
+    w: BUTTON_WIDTH/1.5,
+    h: BUTTON_HEIGHT/3,
+    l: 'Sell Max'
+  };
+
+  if (mouseIsPressed && mouseIsInButton(maxButton)) {
+    let roundedStockAmount = Math.floor(stockAmount*10000)/10000;
+    if (amountClicked) {
+      textBox.value(roundedStockAmount.toFixed(4));
+    }
+    else {
+      textBox.value((roundedStockAmount*currentPrice).toFixed(2));
+    }
+  }
+
+  if (mouseIsInButton(maxButton)) {
+    fill('red');
+  }
+  else {
+    fill(255, 0, 0, 100);
+  }
+
+  stroke(0);
+  rect(maxButton.x, maxButton.y, maxButton.w, maxButton.h);
+  fill(0); 
+  noStroke(); 
+  textSize(maxButton.w/6);
+  text(maxButton.l, maxButton.x, maxButton.y);
 
   for (let button of priceAmountButtons) {
     if (mouseIsPressed) {
@@ -613,6 +730,7 @@ async function sell() {
       let response = await fetch(`${SERVER_URL}/sell/${clicked}/${sellAmount}`);
       response = await response.json();
       tradeMessage = response.message;
+      buySellTime = millis();
     }
     catch(error) {
       console.log("something went wrong " + error);

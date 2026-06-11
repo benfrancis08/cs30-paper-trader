@@ -12,5 +12,5 @@ A paper trader that utilizes a frontend and backend, talking to each other throu
 ## Nice to Haves:
 - Visual charts/graphs of past stock data 🟢
 - Past transaction history 🟢
-- Live updating stocks (on a preset interval) - Done 🟢
+- Live updating stocks (on a preset interval) 🟢
 - Users 🔴
