@@ -2,8 +2,6 @@
   "include": [
     "*.js",
     "libraries/*.js",
-    "c:\\Users\\benme\\.vscode\\extensions\\wmcicompsci.cs30-p5-1.9.7\\p5types\\global.d.ts",
-    "c:\\Users\\benme\\.vscode\\extensions\\wmcicompsci.cs30-p5-1.9.7\\p5types\\p5.sound.d.ts",
-    "c:\\Users\\benme\\.vscode\\extensions\\wmcicompsci.cs30-p5-1.9.7\\p5types\\p5.sound.global.d.ts"
+    "c:\\Users\\benme\\.vscode\\extensions\\wmcicompsci.cs30-p5-1.9.4\\p5types\\global.d.ts"
   ]
 }

@@ -1,9 +1,15 @@
 // CS30 Paper Trader
 // Ben Francis
-// Date
+// June 12, 2026
 //
 // Extra for Experts:
-// - describe what you did to take this project "above and beyond"
+// - Explored running a backend on a server
+// - Explored using node and express.js to create the backend and a url to fetch and send data to through json format
+// - Explored using cors to whitelist my github page to allow only the github page the frontend is hosted on to fetch data
+// - Explored making home server accessable on the internet through a tailscale funnel
+// - Created a system daemon to start tailscale funnel and backend thought node on server start
+// - Explored creating a global textbox with createInput to allow typing inside of my project without using a web alert/input
+// - Explored convering maps to objects and vise versa to send through json format
 
 // Variables used in project
 let currentTime;
@@ -36,6 +42,7 @@ const SERVER_URL = 'https://pine64.tailb67b61.ts.net';
 
 let stocks = new Map();
 
+// Sets up variables and initializes stock and user data as well as the textBox input
 async function setup() {
   createCanvas(windowWidth, windowHeight);
   currentTime = millis();
@@ -77,6 +84,7 @@ async function setup() {
 
 // Main draw loop calls all functions needed to create project
 function draw() {
+  // Checks if first data is pulled from server else displaying 'Loaiding from server' text
   if (!loaded) {
     background(220);
     textAlign(CENTER, CENTER);
@@ -124,6 +132,7 @@ async function getStocks() {
     let stockPrices = await fetch(`${SERVER_URL}/prices`);
     price = await stockPrices.json();
 
+    // Converts object from json back into map
     for (let [symbol, value] of Object.entries(price)) {
       stocks.set(symbol, value);
     }
@@ -153,6 +162,7 @@ async function getUserData() {
 
     let holdingsResponse = await fetch(`${SERVER_URL}/holdings`);
     userHoldings = await holdingsResponse.json();
+    // Removes stocks that have less that 0.0001 holding from frontend map to prevent issues with rounding
     userHoldings = userHoldings.filter((holding) => holding.quantity > 0.0001);
 
     let transactionResponse = await fetch(`${SERVER_URL}/transactions`);
@@ -420,6 +430,7 @@ function cryptoGraph(symbol) {
 
 // buy function handles buy popup and buy logic/sending to backend
 async function buy() {
+  // Sets up variables used in the buy function
   let w;
   let purchacePrice;
   let purchaceAmount;
@@ -427,12 +438,14 @@ async function buy() {
 
   let currentPrice = currentStock.price[currentStock.price.length - 1];
   let stockAmount = 0;
+  // sets the stockAmount to the current stock quantity
   for (let holding of userHoldings) {
     if (holding.symbol === clicked) {
       stockAmount = holding.quantity;
     }
   }
 
+  // Sets up and creates buy popup
   if (width > height) {
     w = height/1.6;
   }
@@ -447,6 +460,7 @@ async function buy() {
   stroke(0);
   rect(width/2, height/2, w, w/2);
   
+  // Creates text on buy popup
   fill('green');
   noStroke();
   textSize(w*TEXT_SIZE_FACTOR);
@@ -464,6 +478,7 @@ async function buy() {
     text(`Price owned:\n$${(currentPrice*stockAmount).toFixed(2)}`, width/2 - w/3, height/2 + w/8);
   }
 
+  // Sets up buy max button
   let maxButton = {
     x: width/2 + w/3,
     y: height/2 + w/8,
@@ -472,14 +487,15 @@ async function buy() {
     l: 'Buy Max'
   };
 
+  // Displays buy max button and sets textbox value to max amount when clicked
   if (mouseIsPressed && mouseIsInButton(maxButton)) {
     let maxAmount = userBalance/currentPrice;
     let roundedMaxAmount = Math.floor(maxAmount*10000)/10000;
     if (amountClicked) {
-      textBox.value(maxAmount.toFixed(4));
+      textBox.value(roundedMaxAmount.toFixed(4));
     }
     else {
-      textBox.value((maxAmount*currentPrice).toFixed(2));
+      textBox.value((roundedMaxAmount*currentPrice).toFixed(2));
     }
   }
 
@@ -497,6 +513,7 @@ async function buy() {
   textSize(maxButton.w/6);
   text(maxButton.l, maxButton.x, maxButton.y);
 
+  // Buttons to swap between buying off price and amount
   for (let button of priceAmountButtons) {
     if (mouseIsPressed) {
       if (mouseIsInButton(button) && button.l === 'Amount') {
@@ -516,6 +533,7 @@ async function buy() {
       fill(255);
     }
 
+    // Displays buy button
     stroke(0);
     rect(button.x, button.y, button.w, button.h);
 
@@ -527,6 +545,7 @@ async function buy() {
 
   textBox.show();
 
+  // Displays current balance, current holdings, current stock price and a buy instruction on the popup
   if (amountClicked && textBox.value() !== '') {
     purchaceAmount = parseFloat(textBox.value());
     purchacePrice = purchaceAmount * currentStock.price[currentStock.price.length - 1];
@@ -548,6 +567,7 @@ async function buy() {
     text('Enter a valid price or amount', width/2, height/1.6 - PADDING*2);
   }
 
+  // Displays message after buying
   if (tradeMessage !== '') {
     textBox.hide();
     fill(255);
@@ -564,6 +584,7 @@ async function buy() {
     text(tradeMessage, width/2, height/2);
   }
 
+  // Sends transaction to backend
   if (transaction === 'Buy') {
     transaction = undefined;
     try {
@@ -581,6 +602,7 @@ async function buy() {
 
 // sell function handles sell popup and sell logic/sending to backend
 async function sell() {
+  // Sets up variables used in the sell function
   let w;
   let sellPrice;
   let sellAmount;
@@ -588,12 +610,14 @@ async function sell() {
 
   let currentPrice = currentStock.price[currentStock.price.length - 1];
   let stockAmount = 0;
+  // sets the stockAmount to the current stock quantity
   for (let holding of userHoldings) {
     if (holding.symbol === clicked) {
       stockAmount = holding.quantity;
     }
   }
 
+  // Sets up and creates sell popup
   if (width > height) {
     w = height/1.6;
   }
@@ -608,6 +632,7 @@ async function sell() {
   stroke(0);
   rect(width/2, height/2, w, w/2);
   
+  // Creates text on sell popup
   fill('red');
   noStroke();
   textSize(w*TEXT_SIZE_FACTOR);
@@ -625,6 +650,7 @@ async function sell() {
     text(`Price owned:\n$${(currentPrice*stockAmount).toFixed(2)}`, width/2 - w/3, height/2 + w/8);
   }
 
+  // Sets up sell max button
   let maxButton = {
     x: width/2 + w/3,
     y: height/2 + w/8,
@@ -633,6 +659,7 @@ async function sell() {
     l: 'Sell Max'
   };
 
+  // Displays sell max button and sets textbox value to max amount when clicked
   if (mouseIsPressed && mouseIsInButton(maxButton)) {
     let roundedStockAmount = Math.floor(stockAmount*10000)/10000;
     if (amountClicked) {
@@ -657,6 +684,7 @@ async function sell() {
   textSize(maxButton.w/6);
   text(maxButton.l, maxButton.x, maxButton.y);
 
+  // Buttons to swap between sell off price and amount
   for (let button of priceAmountButtons) {
     if (mouseIsPressed) {
       if (mouseIsInButton(button) && button.l === 'Amount') {
@@ -676,6 +704,7 @@ async function sell() {
       fill(255);
     }
 
+    // Displays sell button
     stroke(0);
     rect(button.x, button.y, button.w, button.h);
 
@@ -687,6 +716,7 @@ async function sell() {
 
   textBox.show();
 
+  // Displays current balance, current holdings, current stock price and a buy instruction on the popup
   if (amountClicked && textBox.value() !== '') {
     sellAmount = parseFloat(textBox.value());
     sellPrice = sellAmount * currentStock.price[currentStock.price.length - 1];
@@ -708,6 +738,7 @@ async function sell() {
     text('Enter a valid price or amount', width/2, height/1.6 - PADDING*2);
   }
 
+  // Displays message after buying
   if (tradeMessage !== '') {
     textBox.hide();
     fill(255);
@@ -724,6 +755,7 @@ async function sell() {
     text(tradeMessage, width/2, height/2);
   }
 
+  // Sends transaction to backend
   if (transaction === 'Sell') {
     transaction = undefined;
     try {
